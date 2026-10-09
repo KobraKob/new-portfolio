@@ -1,6 +1,12 @@
 ﻿import { copy } from '../content/copy';
-import { cn } from '../lib/utils';
 import { useTheme } from '../app/ThemeProvider';
+import { useState } from 'react';
+
+// Visual Bible assets
+import scenesImg    from '../assets/erevan-scenes.png';
+import characterImg from '../assets/erevan-character.png';
+import creatureImg  from '../assets/erevan-creature.png';
+import worldVideo   from '../assets/erevan-world.mp4';
 
 export function Erevan() {
   return (
@@ -23,60 +29,63 @@ export function Erevan() {
           </h2>
         </header>
 
-        <div className="grid-12 gap-8 items-start">
-          {/* Book spread — 8 cols */}
+        {/* Book spread + meta sidebar */}
+        <div className="grid-12 gap-8 items-start mb-16">
           <div className="col-span-12 lg:col-span-8">
             <BookSpread novel={copy.erevan.novel} />
           </div>
-
-          {/* Sidebar — 4 cols, stacked naturally (no sticky to avoid overlap) */}
           <div className="col-span-12 lg:col-span-4 flex flex-col gap-6">
             <NovelMeta novel={copy.erevan.novel} />
-            <VisualBiblePlaceholder />
           </div>
         </div>
+
+        {/* Visual Bible — full width below */}
+        <VisualBible />
       </div>
     </section>
   );
 }
 
+/* ─── Book Spread ─────────────────────────────────────────────────────────── */
+
 interface BookSpreadProps {
   novel: typeof copy.erevan.novel;
 }
 
-function BookSpread({ novel }: BookSpreadProps) {
-  const { theme } = useTheme();
-  const isGround = theme === 'ground';
+const DARK_BG      = '#0F0E0C';
+const DARK_FG      = '#E9E2D0';
+const DARK_FG_MUTED = '#9A9384';
+const DARK_RULE    = 'rgba(233,226,208,0.14)';
 
-  const midpoint = Math.floor(novel.excerpt.length / 2);
-  const firstHalf = novel.excerpt.slice(0, midpoint);
+function BookSpread({ novel }: BookSpreadProps) {
+  useTheme();
+
+  const midpoint   = Math.floor(novel.excerpt.length / 2);
+  const firstHalf  = novel.excerpt.slice(0, midpoint);
   const secondHalf = novel.excerpt.slice(midpoint);
 
   return (
     <article
-      className={cn(
-        'relative bg-[var(--bg)] border border-[var(--rule)] overflow-hidden',
-        isGround ? '' : 'bg-opacity-90'
-      )}
-      style={{ aspectRatio: '1.414 / 1' }}
+      className="relative border overflow-hidden"
+      style={{ aspectRatio: '1.414 / 1', backgroundColor: DARK_BG, color: DARK_FG, borderColor: DARK_RULE } as React.CSSProperties}
       role="region"
       aria-label="Novel excerpt spread"
     >
-      {/* Decorative paper background */}
+      {/* Paper grain + spine */}
       <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
         <svg className="w-full h-full" viewBox="0 0 800 566" preserveAspectRatio="none">
           <defs>
-            <pattern id="paper-grain-e" patternUnits="userSpaceOnUse" width="4" height="4">
-              <path d="M0,0 L4,4 M4,0 L0,4" stroke="var(--rule)" strokeWidth="0.2" fill="none" opacity="0.2" />
+            <pattern id="paper-grain-erevan" patternUnits="userSpaceOnUse" width="4" height="4">
+              <path d="M0,0 L4,4 M4,0 L0,4" stroke={DARK_RULE} strokeWidth="0.2" fill="none" opacity="0.2" />
             </pattern>
           </defs>
-          <rect width="800" height="566" fill="url(#paper-grain-e)" />
-          <line x1="400" y1="40" x2="400" y2="526" stroke="var(--rule)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
-          <g fontFamily="JetBrains Mono" fontSize="9" fill="var(--fg-muted)" textAnchor="middle">
-            <text x="200" y="28">THE BOUND AND THE HOLLOW</text>
-            <text x="600" y="28">EREVAN</text>
-            <text x="200" y="552">P. 1</text>
-            <text x="600" y="552">P. 2</text>
+          <rect width="800" height="566" fill="url(#paper-grain-erevan)" />
+          <line x1="400" y1="40" x2="400" y2="526" stroke={DARK_RULE} strokeWidth="2" vectorEffect="non-scaling-stroke" />
+          <g fontFamily="JetBrains Mono" fontSize="9" fill={DARK_FG_MUTED} textAnchor="middle">
+            <text x="200" y="30" style={{ textTransform: 'uppercase', letterSpacing: '0.08em' }}>THE BOUND AND THE HOLLOW</text>
+            <text x="600" y="30" style={{ textTransform: 'uppercase', letterSpacing: '0.08em' }}>EREVAN</text>
+            <text x="200" y="546" style={{ textTransform: 'uppercase', letterSpacing: '0.08em' }}>P. 1</text>
+            <text x="600" y="546" style={{ textTransform: 'uppercase', letterSpacing: '0.08em' }}>P. 2</text>
           </g>
         </svg>
       </div>
@@ -84,41 +93,37 @@ function BookSpread({ novel }: BookSpreadProps) {
       <div className="relative z-10 h-full grid grid-cols-2">
         {/* Left page */}
         <div className="p-6 md:p-10 flex flex-col gap-4 overflow-hidden">
-          <span className="font-display fraunces-erevan text-[var(--step-0)] italic text-[var(--fg-muted)] block">
+          <span className="font-display fraunces-erevan block" style={{ color: DARK_FG_MUTED, fontSize: 'var(--step-0)', fontStyle: 'italic' }}>
             Chapter One
           </span>
-          <p
-            className="flex-1 text-[var(--fg)] font-body overflow-hidden"
-            style={{ fontSize: 'var(--step-0)', lineHeight: '1.65', display: '-webkit-box', WebkitLineClamp: 9, WebkitBoxOrient: 'vertical' }}
-          >
+          <p className="flex-1 font-body overflow-hidden" style={{ color: DARK_FG, fontSize: 'var(--step-0)', lineHeight: '1.7', display: '-webkit-box', WebkitLineClamp: 9, WebkitBoxOrient: 'vertical' }}>
             {firstHalf}
           </p>
-          <div className="flex items-end justify-between pt-4 border-t border-[var(--rule)]">
-            <span className="font-mono uppercase-tracked text-[var(--fg-muted)] text-[var(--step--1)]">{novel.status}</span>
-            <span className="font-mono uppercase-tracked text-[var(--fg-muted)] text-[var(--step--1)]">Roen Dourne</span>
+          <div className="flex items-end justify-between pt-4" style={{ borderTop: `1px solid ${DARK_RULE}` }}>
+            <span className="font-mono uppercase-tracked" style={{ color: DARK_FG_MUTED, fontSize: 'var(--step--1)' }}>{novel.status}</span>
+            <span className="font-mono uppercase-tracked" style={{ color: DARK_FG_MUTED, fontSize: 'var(--step--1)' }}>Roen Dourne</span>
           </div>
         </div>
 
         {/* Right page */}
-        <div className="p-6 md:p-10 flex flex-col gap-4 border-l border-[var(--rule)] overflow-hidden">
-          <span className="font-display fraunces-erevan text-[var(--step-0)] italic text-[var(--fg-muted)] block">
+        <div className="p-6 md:p-10 flex flex-col gap-4 overflow-hidden" style={{ borderLeft: `1px solid ${DARK_RULE}` }}>
+          <span className="font-display fraunces-erevan block" style={{ color: DARK_FG_MUTED, fontSize: 'var(--step-0)', fontStyle: 'italic' }}>
             Chapter Two
           </span>
-          <p
-            className="flex-1 text-[var(--fg)] font-body overflow-hidden"
-            style={{ fontSize: 'var(--step-0)', lineHeight: '1.65', display: '-webkit-box', WebkitLineClamp: 9, WebkitBoxOrient: 'vertical' }}
-          >
+          <p className="flex-1 font-body overflow-hidden" style={{ color: DARK_FG, fontSize: 'var(--step-0)', lineHeight: '1.7', display: '-webkit-box', WebkitLineClamp: 9, WebkitBoxOrient: 'vertical' }}>
             {secondHalf}
           </p>
-          <div className="flex items-end justify-between pt-4 border-t border-[var(--rule)]">
-            <span className="font-mono uppercase-tracked text-[var(--fg-muted)] text-[var(--step--1)]">Visual Bible →</span>
-            <span className="font-mono uppercase-tracked text-[var(--fg-muted)] text-[var(--step--1)]">P. 3</span>
+          <div className="flex items-end justify-between pt-4" style={{ borderTop: `1px solid ${DARK_RULE}` }}>
+            <span className="font-mono uppercase-tracked" style={{ color: DARK_FG_MUTED, fontSize: 'var(--step--1)' }}>Visual Bible →</span>
+            <span className="font-mono uppercase-tracked" style={{ color: DARK_FG_MUTED, fontSize: 'var(--step--1)' }}>P. 3</span>
           </div>
         </div>
       </div>
     </article>
   );
 }
+
+/* ─── Novel Meta ──────────────────────────────────────────────────────────── */
 
 interface NovelMetaProps {
   novel: typeof copy.erevan.novel;
@@ -159,36 +164,192 @@ function NovelMeta({ novel }: NovelMetaProps) {
   );
 }
 
-function VisualBiblePlaceholder() {
+/* ─── Visual Bible ────────────────────────────────────────────────────────── */
+
+const visualBibleFrames = [
+  {
+    id: 'scenes',
+    label: 'Scene Studies',
+    caption: 'Ch. 2 · Ch. 6 · Ch. 7',
+    type: 'image' as const,
+    src: scenesImg,
+    alt: 'Scene illustrations: Discovery in Sundermark, Inside the Archive, The Silence of the Hollow',
+    span: 'col-span-12 md:col-span-8',
+  },
+  {
+    id: 'character',
+    label: 'Roen Dourne',
+    caption: 'Character study',
+    type: 'image' as const,
+    src: characterImg,
+    alt: 'Character study of Roen Dourne — full body and close-up in post-industrial wasteland setting',
+    span: 'col-span-12 md:col-span-4',
+  },
+  {
+    id: 'creature',
+    label: 'The White Bird',
+    caption: 'Creature sheet',
+    type: 'image' as const,
+    src: creatureImg,
+    alt: 'Creature concept sheet for the white bird of Erevan — multiple angles and wing-spread pose',
+    span: 'col-span-12 md:col-span-6',
+  },
+  {
+    id: 'world',
+    label: 'World Reel',
+    caption: 'Motion study',
+    type: 'video' as const,
+    src: worldVideo,
+    span: 'col-span-12 md:col-span-6',
+  },
+] as const;
+
+function VisualBible() {
+  const [lightbox, setLightbox] = useState<null | typeof visualBibleFrames[number]>(null);
+
   return (
-    <div className="bg-[var(--bg)] border border-[var(--rule)] p-6 hard-shadow">
-      <h3 className="font-mono uppercase-tracked text-[var(--signal)] text-[var(--step-0)] mb-6 pb-3 border-b border-[var(--rule)]">
-        {copy.erevan.visualBible.label}
-      </h3>
-      <div className="grid grid-cols-2 gap-3" role="list" aria-label="Visual Bible frames">
-        {[1, 2, 3, 4].map((i) => (
-          <div
-            key={i}
-            className="aspect-square bg-[var(--rule)]/40 relative overflow-hidden"
-            role="listitem"
-            aria-label={`Visual Bible frame ${i}`}
-          >
-            <svg className="w-full h-full text-[var(--fg-muted)]" viewBox="0 0 100 100" preserveAspectRatio="none">
-              <rect width="100" height="100" fill="none" stroke="currentColor" strokeWidth="1" vectorEffect="non-scaling-stroke" />
-              <path d="M20,50 Q30,30 50,50 Q70,70 80,50" fill="none" stroke="currentColor" strokeWidth="1.5" vectorEffect="non-scaling-stroke" opacity="0.4" />
-              <text x="50" y="55" fontFamily="JetBrains Mono" fontSize="8" textAnchor="middle" dominantBaseline="middle" fill="currentColor">
-                Frame {i}
-              </text>
-            </svg>
-            <span className="absolute bottom-2 left-2 font-mono uppercase-tracked text-[var(--step--1)] bg-[var(--bg)]/90 px-1 py-0.5">
-              Study
-            </span>
-          </div>
+    <section aria-labelledby="visual-bible-title">
+      {/* Section header */}
+      <header className="mb-8 pb-4 border-b border-[var(--rule)] flex items-baseline justify-between">
+        <h3
+          id="visual-bible-title"
+          className="font-mono uppercase-tracked text-[var(--signal)]"
+          style={{ fontSize: 'var(--step-0)' }}
+        >
+          {copy.erevan.visualBible.label}
+        </h3>
+        <span className="font-mono uppercase-tracked text-[var(--fg-muted)]" style={{ fontSize: 'var(--step--1)' }}>
+          {visualBibleFrames.length} frames
+        </span>
+      </header>
+
+      {/* Grid of frames */}
+      <div className="grid-12 gap-4">
+        {visualBibleFrames.map((frame) => (
+          <VisualBibleFrame
+            key={frame.id}
+            frame={frame}
+            onOpen={() => setLightbox(frame)}
+          />
         ))}
       </div>
-      <p className="mt-4 font-body text-[var(--fg-muted)] text-[var(--step--1)] italic text-center">
-        {copy.erevan.visualBible.placeholder}
-      </p>
+
+      {/* Lightbox */}
+      {lightbox && (
+        <Lightbox frame={lightbox} onClose={() => setLightbox(null)} />
+      )}
+    </section>
+  );
+}
+
+type Frame = typeof visualBibleFrames[number];
+
+function VisualBibleFrame({ frame, onOpen }: { frame: Frame; onOpen: () => void }) {
+  return (
+    <button
+      type="button"
+      className={`${frame.span} relative group overflow-hidden border border-[var(--rule)] hard-shadow focus-visible:outline-2 focus-visible:outline-[var(--signal)] focus-visible:outline-offset-2`}
+      style={{ aspectRatio: frame.id === 'character' ? '3/4' : '16/9' }}
+      onClick={onOpen}
+      aria-label={`View ${frame.label} — ${frame.caption}`}
+    >
+      {/* Media */}
+      {frame.type === 'image' ? (
+        <img
+          src={frame.src}
+          alt={frame.alt}
+          className="w-full h-full object-cover transition-transform duration-480 group-hover:scale-[1.02]"
+          loading="lazy"
+          decoding="async"
+        />
+      ) : (
+        <video
+          src={frame.src}
+          className="w-full h-full object-cover"
+          autoPlay
+          loop
+          muted
+          playsInline
+          aria-label={frame.label}
+        />
+      )}
+
+      {/* Overlay label — title block style */}
+      <div className="absolute inset-0 bg-[var(--fg)]/0 group-hover:bg-[var(--fg)]/10 transition-colors duration-240 pointer-events-none" aria-hidden="true" />
+      <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between px-4 py-3 bg-[#0F0E0C]/80 backdrop-blur-none">
+        <span className="font-mono uppercase-tracked text-[#E9E2D0]" style={{ fontSize: 'var(--step--1)' }}>
+          {frame.label}
+        </span>
+        <span className="font-mono uppercase-tracked text-[#9A9384]" style={{ fontSize: 'var(--step--1)' }}>
+          {frame.caption}
+        </span>
+      </div>
+
+      {/* Expand hint */}
+      <div className="absolute top-3 right-3 w-7 h-7 border border-[#9A9384]/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-240" aria-hidden="true">
+        <svg viewBox="0 0 16 16" fill="none" stroke="#E9E2D0" strokeWidth="1.2" className="w-3.5 h-3.5">
+          <path d="M10 2h4v4M6 14H2v-4M14 2l-5 5M2 14l5-5" />
+        </svg>
+      </div>
+    </button>
+  );
+}
+
+function Lightbox({ frame, onClose }: { frame: Frame; onClose: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#0F0E0C]/92 p-4 md:p-8"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${frame.label} — ${frame.caption}`}
+      onClick={onClose}
+    >
+      <div
+        className="relative max-w-5xl w-full max-h-[90vh] flex flex-col gap-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Close button */}
+        <button
+          type="button"
+          className="absolute -top-10 right-0 font-mono uppercase-tracked text-[#9A9384] hover:text-[#E9E2D0] transition-colors"
+          style={{ fontSize: 'var(--step--1)' }}
+          onClick={onClose}
+          aria-label="Close"
+        >
+          ESC / CLOSE ✕
+        </button>
+
+        {/* Media */}
+        <div className="border border-[rgba(233,226,208,0.14)] overflow-hidden">
+          {frame.type === 'image' ? (
+            <img
+              src={frame.src}
+              alt={frame.alt}
+              className="w-full h-full object-contain max-h-[75vh]"
+            />
+          ) : (
+            <video
+              src={frame.src}
+              className="w-full max-h-[75vh] object-contain"
+              controls
+              autoPlay
+              loop
+              muted
+              playsInline
+            />
+          )}
+        </div>
+
+        {/* Caption bar */}
+        <div className="flex items-center justify-between px-1">
+          <span className="font-mono uppercase-tracked text-[#E9E2D0]" style={{ fontSize: 'var(--step--1)' }}>
+            {frame.label}
+          </span>
+          <span className="font-mono uppercase-tracked text-[#9A9384]" style={{ fontSize: 'var(--step--1)' }}>
+            {frame.caption}
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
