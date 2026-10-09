@@ -1,228 +1,245 @@
-﻿import { getExperience } from '../content/experience';
+﻿import { useEffect, useRef, useState } from 'react';
+import { getExperience } from '../content/experience';
 import { copy } from '../content/copy';
-import { cn } from '../lib/utils';
+import './fieldnotes.css';
 
+type Experience = ReturnType<typeof getExperience>[0];
+
+// Move into copy.ts if you want all text in one place
+const LABELS = {
+  subWaypoints: 'Sub-waypoints',
+  location: 'Location',
+  period: 'Period',
+  waypoints: 'Waypoints',
+};
+
+/* ------------------------------------------------------------------ */
+/*  Reveal once when an item enters the upper part of the viewport     */
+/* ------------------------------------------------------------------ */
+function useSeen<T extends Element>() {
+  const ref = useRef<T>(null);
+  const [seen, setSeen] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (typeof IntersectionObserver === 'undefined') {
+      setSeen(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setSeen(true);
+          io.disconnect();
+        }
+      },
+      { rootMargin: '0px 0px -35% 0px' }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  return [ref, seen] as const;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Section                                                            */
+/* ------------------------------------------------------------------ */
 export function FieldNotes() {
   const experience = getExperience();
 
-  // Separate experiences with and without subWaypoints
-  const experiencesWithSubWaypoints = experience.filter(item => 
-    item.subWaypoints && item.subWaypoints.length > 0
-  );
-  
-  const experiencesWithoutSubWaypoints = experience.filter(item => 
-    !item.subWaypoints || item.subWaypoints.length === 0
-  );
+  // Same ordering as before: entries with sub-waypoints first
+  const withSub = experience.filter((i) => i.subWaypoints && i.subWaypoints.length > 0);
+  const withoutSub = experience.filter((i) => !i.subWaypoints || i.subWaypoints.length === 0);
+  const items = [...withSub, ...withoutSub];
+
+  const listRef = useRef<HTMLOListElement>(null);
+
+  // Scroll-linked traverse line: fills as you read down the list
+  useEffect(() => {
+    const el = listRef.current;
+    if (!el) return;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let raf = 0;
+
+    const update = () => {
+      raf = 0;
+      const r = el.getBoundingClientRect();
+      const p = Math.min(1, Math.max(0, (window.innerHeight * 0.6 - r.top) / r.height));
+      el.style.setProperty('--progress', reduce ? '1' : p.toFixed(4));
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
+  }, []);
 
   return (
-    <section 
-      id="fieldnotes" 
-      className="section relative"
-      aria-labelledby="fieldnotes-title"
-    >
+    <section id="fieldnotes" className="section relative" aria-labelledby="fieldnotes-title">
       <div className="container relative">
         <header className="mb-16">
           <span className="font-mono uppercase-tracked text-[var(--signal)] block mb-4">
             {copy.fieldnotes.title}
           </span>
-          <h2 id="fieldnotes-title" className="font-display fraunces-ground text-[var(--fg)]" style={{ fontSize: 'var(--step-5)' }}>
+          <h2
+            id="fieldnotes-title"
+            className="font-display fraunces-ground text-[var(--fg)]"
+            style={{ fontSize: 'var(--step-5)' }}
+          >
             {copy.fieldnotes.subtitle}
           </h2>
         </header>
 
-        <div className="grid-12">
-          {/* Timeline visualization for experiences with subWaypoints (like TCS) */}
-          {!experiencesWithSubWaypoints.length ? null : (
-            <aside className="relative z-10 col-span-2 hidden xl:block">
-              <div className="sticky top-24">
-                <span className="font-mono uppercase-tracked text-[var(--signal)] block mb-4">
-                  {copy.fieldnotes.routeLabel}
-                </span>
-                <div className="relative">
-                  <svg className="w-1 h-full absolute left-1/2 -translate-x-1/2" viewBox="0 0 2 400" preserveAspectRatio="none" aria-hidden="true">
-                    <line x1="1" y1="0" x2="1" y2="400" stroke="var(--rule)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
-                    <line x1="1" y1="0" x2="1" y2="400" stroke="var(--signal)" strokeWidth="2" vectorEffect="non-scaling-stroke" className="route-progress" style={{ strokeDasharray: '400', strokeDashoffset: '400' }} />
-                  </svg>
-                  
-                  <ul className="relative space-y-16 md:space-y-24" role="list" aria-label="Experience timeline">
-                    {experiencesWithSubWaypoints.map((item, index) => (
-                      <ExperienceTimelineItem key={item.id} item={item} index={index} total={experiencesWithSubWaypoints.length} />
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </aside>
-          )}
-          
-          {/* Main content area — always full 12 cols (aside only shows on xl) */}
-          <div className="col-span-12 relative">
-            {/* Render experiences with subWaypoints as cards */}
-            {experiencesWithSubWaypoints.map((item, index) => (
-              <ExperienceCard key={item.id} item={item} index={index} totalExperiences={experience.length} />
-            ))}
-            
-            {/* Render experiences without subWaypoints using the two-column layout */}
-            {experiencesWithoutSubWaypoints.map((item, index) => (
-              <EducationExperienceCard key={item.id} item={item} index={index} totalExperiences={experience.length} />
-            ))}
-          </div>
-        </div>
+        <span className="font-mono uppercase-tracked text-[var(--signal)] text-[var(--step--1)] block mb-8 fn-route-label">
+          {copy.fieldnotes.routeLabel}
+        </span>
+
+        <ol ref={listRef} className="fn-list" aria-label="Experience">
+          {items.map((item) => (
+            <FieldSheet key={item.id} item={item} />
+          ))}
+        </ol>
       </div>
     </section>
   );
 }
 
-// Timeline item for experiences with subWaypoints (like TCS)
-function ExperienceTimelineItem({ item, index, total }: { 
-  item: ReturnType<typeof getExperience>[0]; 
-  index: number; 
-  total: number;
-}) {
-  return (
-    <li key={item.id} className="relative">
-      <div 
-        className={cn(
-          'absolute left-1/2 -translate-x-1/2 w-4 h-4 rounded-full border-3 border-[var(--bg)] z-10 transition-all duration-480',
-          'bg-[var(--fg-muted)]',
-          index === 0 && 'bg-[var(--signal)]',
-          index === total - 1 && 'bg-[var(--signal)]',
-          'group-hover:bg-[var(--signal)] group-hover:border-[var(--signal)] group-hover:scale-150'
-        )}
-        aria-hidden="true"
-      />
-      <div className="ml-12 md:ml-0 md:text-right md:pr-8 md:w-full lg:w-auto">
-        <time className="font-mono uppercase-tracked text-[var(--step--1)] text-[var(--fg-muted)] block mb-1">
-          {item.period}
-        </time>
-        <h3 className="font-display fraunces-ground text-[var(--fg)] text-[var(--step-1)] mb-1">
-          {item.role}
-        </h3>
-        <p className="font-body text-[var(--fg-muted)] text-[var(--step-0)]">
-          {item.organization}
-        </p>
-        <p className="font-mono uppercase-tracked text-[var(--fg-muted)] text-[var(--step--1)] mt-1">
-          {item.location}
-        </p>
-      </div>
-    </li>
-  );
-}
+/* ------------------------------------------------------------------ */
+/*  One survey sheet per entry                                         */
+/* ------------------------------------------------------------------ */
+function FieldSheet({ item }: { item: Experience }) {
+  const [ref, seen] = useSeen<HTMLLIElement>();
+  const subs = item.subWaypoints ?? [];
+  const hasSubs = subs.length > 0;
 
-// Standard experience card (for experiences with subWaypoints like TCS)
-function ExperienceCard({ item, index, totalExperiences }: { 
-  item: ReturnType<typeof getExperience>[0]; 
-  index: number; 
-  totalExperiences: number;
-}) {
+  // Title block cells; period only shows here below lg (the rail shows it above)
+  const cells: { k: string; v: string; mobileOnly?: boolean }[] = [
+    { k: LABELS.period, v: item.period, mobileOnly: true },
+  ];
+  if (item.location) cells.push({ k: LABELS.location, v: item.location });
+  if (hasSubs) cells.push({ k: LABELS.waypoints, v: String(subs.length) });
+
+  const titleId = `fn-${item.id}`;
+
   return (
-    <article 
-      className="relative mb-16 md:mb-20 last:mb-0 animate-fade-in"
-      style={{ animationDelay: `${index * 100}ms` }}
-    >
-      <div className="absolute left-0 top-4 -translate-x-1/2 w-3 h-3 rounded-full bg-[var(--signal)] border-3 border-[var(--bg)]" aria-hidden="true" />
-      
-      <div className="bg-[var(--bg)] border border-[var(--rule)] p-6 md:p-8 hard-shadow relative transition-theme">
-        <header className="mb-6">
-          <div className="flex flex-wrap items-baseline gap-3 mb-3">
-            <h3 className="font-display fraunces-ground text-[var(--fg)] text-[var(--step-2)]">
+    <li ref={ref} className={`fn-item ${seen ? 'is-seen' : ''}`}>
+      <time className="fn-item__period font-mono uppercase-tracked">{item.period}</time>
+
+      <div className="fn-item__rail" aria-hidden="true">
+        <span className="fn-node" />
+      </div>
+
+      <article className="fn-sheet" aria-labelledby={titleId}>
+        <div className="fn-sheet__inner">
+          {/* Scale strip: tick marks, revealed left to right */}
+          <svg className="fn-strip" height="12" aria-hidden="true">
+            <line
+              x1="0"
+              y1="6"
+              x2="100%"
+              y2="6"
+              stroke="var(--fg)"
+              strokeOpacity="0.55"
+              strokeWidth="6"
+              strokeDasharray="1 9"
+            />
+            <line
+              x1="0"
+              y1="6"
+              x2="100%"
+              y2="6"
+              stroke="var(--fg)"
+              strokeWidth="12"
+              strokeDasharray="1 49"
+            />
+          </svg>
+
+          <header className="fn-sheet__head">
+            <h3
+              id={titleId}
+              className="font-display fraunces-ground text-[var(--fg)]"
+              style={{ fontSize: 'var(--step-3)', lineHeight: 1.02 }}
+            >
               {item.role}
             </h3>
-            <span className="font-mono uppercase-tracked text-[var(--fg-muted)] text-[var(--step--1)] px-2 py-1 bg-[var(--rule)]">
-              {item.period}
-            </span>
-          </div>
-          <p className="font-body text-[var(--fg-muted)] text-[var(--step-0)]">
-            {item.organization}
-          </p>
-          <p className="font-mono uppercase-tracked text-[var(--fg-muted)] text-[var(--step--1)] mt-1">
-            {item.location}
-          </p>
-        </header>
+            {item.organization && (
+              <p className="font-body text-[var(--fg-muted)] text-[var(--step-0)] mt-2 mb-0">
+                {item.organization}
+              </p>
+            )}
+          </header>
 
-        <div className="prose max-w-none">
-          <ul className="space-y-3" role="list">
-            {item.description.map((desc, i) => (
-              <li key={i} className="flex gap-3 text-[var(--fg)] text-[var(--step-0)] leading-relaxed">
-                <span className="font-mono uppercase-tracked text-[var(--signal)] text-[var(--step--1)] shrink-0 mt-1" aria-hidden="true">
-                  ▸
-                </span>
-                <span>{desc}</span>
-              </li>
-            ))}
-          </ul>
-
-          {item.subWaypoints && item.subWaypoints.length > 0 && (
-            <div className="mt-6 pt-6 border-t border-[var(--rule)]">
-              <h4 className="font-mono uppercase-tracked text-[var(--signal)] text-[var(--step--1)] mb-4">
-                Sub-waypoints
-              </h4>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-4">
-                {item.subWaypoints.map((sub) => (
-                  <div key={sub.label} className="min-w-0 bg-[var(--rule)]/30 p-4">
-                    <h5
-                      className="font-display fraunces-ground mb-2 break-words text-[var(--fg)]"
-                      style={{ fontSize: 'clamp(1.45rem, 2.2vw, 2.25rem)', lineHeight: '0.92' }}
-                    >
-                      {sub.label}
-                    </h5>
-                    <p className="mb-0 text-[var(--fg-muted)] text-[var(--step-0)] leading-relaxed">
-                      {sub.description}
-                    </p>
-                  </div>
-                ))}
+          {/* Title block */}
+          <div className="fn-block font-mono">
+            {cells.map((c) => (
+              <div key={c.k} className={c.mobileOnly ? 'fn-block__cell fn-block__cell--mobile' : 'fn-block__cell'}>
+                <span className="fn-block__k">{c.k}</span>
+                <span className="fn-block__v">{c.v}</span>
               </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </article>
-  );
-}
+            ))}
+          </div>
 
-// Two-column layout for experiences without subWaypoints (like BCA Education)
-function EducationExperienceCard({ item, index, totalExperiences: _totalExperiences }: { 
-  item: ReturnType<typeof getExperience>[0]; 
-  index: number; 
-  totalExperiences: number;
-}) {
-  return (
-    <article 
-      className="relative mb-16 md:mb-20 last:mb-0 animate-fade-in"
-      style={{ animationDelay: `${index * 100}ms` }}
-    >
-      {/* Two-column layout */}
-      <div className="grid grid-cols-12 gap-6">
-        {/* Left column: Large decorative heading */}
-        <div className="col-span-12 md:col-span-5 relative z-10 p-6">
-          <h2 
-            className="font-display fraunces-ground text-[var(--fg)] mb-4 leading-[0.9] tracking-[-0.02em]"
-            style={{ fontSize: 'clamp(2.5rem, 6vw, 4.5rem)' }}
-          >
-            {item.role}
-          </h2>
-          
-          <p className="font-mono uppercase-tracked text-[var(--fg-muted)] text-[var(--step--1)] mb-2">
-            {item.period}
-          </p>
-          
-          <p className="font-body text-[var(--fg-muted)] text-[var(--step-0)]">
-            {item.location}
-          </p>
-        </div>
-        
-        {/* Right column: Education information card */}
-        <div className="col-span-12 md:col-span-7 relative z-10">
-          <div className="bg-[var(--bg)] border border-[var(--rule)] p-6 md:p-8 hard-shadow relative transition-theme">            
-            <div className="prose max-w-none">
-              {item.description.map((desc, i) => (
-                <p key={i} className={`font-body text-[var(--fg-muted)] text-[var(--step-0)] ${i < item.description.length - 1 ? 'mb-4' : ''}`}>
+          <div className="fn-body">
+            {hasSubs ? (
+              <ul className="fn-list-points" role="list">
+                {item.description.map((desc, i) => (
+                  <li key={i} className="text-[var(--fg)] text-[var(--step-0)] leading-relaxed">
+                    <span className="fn-bullet" aria-hidden="true" />
+                    <span>{desc}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              item.description.map((desc, i) => (
+                <p
+                  key={i}
+                  className="font-body text-[var(--fg)] text-[var(--step-0)] leading-relaxed mb-4 last:mb-0"
+                >
                   {desc}
                 </p>
-              ))}
-            </div>
+              ))
+            )}
+
+            {hasSubs && (
+              <div className="fn-waypoints">
+                <h4 className="font-mono uppercase-tracked text-[var(--signal)] text-[var(--step--1)] mb-4">
+                  {LABELS.subWaypoints}
+                </h4>
+                <ul className="fn-wp-grid" role="list">
+                  {subs.map((sub) => (
+                    <li key={sub.label} className="fn-wp">
+                      <svg className="fn-wp__mark" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+                        <g fill="none" stroke="currentColor" strokeWidth="1.2">
+                          <circle cx="7" cy="7" r="3" />
+                          <path d="M7,0v3.5M7,10.5V14M0,7h3.5M10.5,7H14" />
+                        </g>
+                      </svg>
+                      <h5
+                        className="font-display fraunces-ground text-[var(--fg)] mb-2 break-words"
+                        style={{ fontSize: 'clamp(1.2rem, 1.7vw, 1.65rem)', lineHeight: 1 }}
+                      >
+                        {sub.label}
+                      </h5>
+                      <p className="mb-0 text-[var(--fg-muted)] text-[var(--step-0)] leading-relaxed">
+                        {sub.description}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         </div>
-      </div>
-    </article>
+      </article>
+    </li>
   );
 }

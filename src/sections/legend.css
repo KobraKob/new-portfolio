@@ -1,0 +1,292 @@
+/* Legend: a cartographic map legend.
+   Uses only existing theme tokens. Works in both Ground and Erevan. */
+
+/* ---------- Sheet: double neatline (same as Substrate / FieldNotes) ---------- */
+.lg-sheet {
+  min-width: 0;
+  padding: 6px;
+  border: 1px solid var(--rule);
+}
+
+.lg-sheet__inner {
+  border: 1.4px solid var(--fg);
+  background: var(--bg);
+}
+
+.lg-sheet__body {
+  padding: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .lg-sheet__body {
+    padding: 2rem;
+  }
+}
+
+/* Tick-mark scale strip, revealed left to right */
+.lg-strip {
+  display: block;
+  width: 100%;
+  height: 12px;
+  border-bottom: 1px solid var(--rule);
+  clip-path: inset(0 100% 0 0);
+}
+
+.is-seen .lg-strip {
+  clip-path: inset(0 0 0 0);
+  transition: clip-path 1.4s cubic-bezier(0.65, 0, 0.35, 1) 0.1s;
+}
+
+/* ---------- Categories ---------- */
+.lg-cat + .lg-cat {
+  margin-top: 2.25rem;
+}
+
+.lg-cat__head {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin: 0 0 0.75rem;
+  font-size: var(--step--1);
+  color: var(--signal);
+}
+
+.lg-cat__rule {
+  flex: 1;
+  height: 1px;
+  background: var(--rule);
+}
+
+.lg-cat__n {
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.lg-rows {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  column-gap: 2.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 768px) {
+  .lg-rows {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ---------- Skill row: [symbol] name ........ count ---------- */
+.lg-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.8rem;
+  width: 100%;
+  padding: 0.6rem 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: inherit;
+}
+
+.lg-row:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 3px;
+}
+
+.lg-mark {
+  flex: none;
+  align-self: center;
+  color: var(--signal);
+  transform: scale(0);
+}
+
+/* Symbols are plotted one after another, once, when the sheet scrolls in */
+.is-seen .lg-mark {
+  transform: scale(1);
+  transition: transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1)
+    calc(0.7s + var(--i, 0) * 35ms);
+}
+
+.lg-mark__ticks {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 0.4s ease;
+}
+
+.lg-row:hover .lg-mark__ticks,
+.lg-row.is-active .lg-mark__ticks {
+  transform: scale(1.22);
+}
+
+.lg-name {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--step-1);
+  line-height: 1.1;
+}
+
+/* Dotted leader, as in a printed legend or table of contents */
+.lg-leader {
+  flex: 1 1 1rem;
+  min-width: 1rem;
+  margin-bottom: 0.38em;
+  border-bottom: 1px dotted var(--fg-muted);
+  opacity: 0.45;
+  transition: opacity 0.3s ease, border-color 0.3s ease;
+}
+
+.lg-count {
+  flex: none;
+  min-width: 1ch;
+  color: var(--fg-muted);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.3s ease;
+}
+
+.lg-row:hover .lg-leader,
+.lg-row.is-active .lg-leader {
+  border-bottom-style: solid;
+  border-bottom-color: var(--signal);
+  opacity: 1;
+}
+
+.lg-row:hover .lg-count,
+.lg-row.is-active .lg-count {
+  color: var(--signal);
+}
+
+/* ---------- Map key ---------- */
+.lg-key-wrap {
+  min-width: 0;
+}
+
+@media (min-width: 1024px) {
+  .lg-key-wrap {
+    position: sticky;
+    top: 6rem;
+  }
+}
+
+.lg-key__title {
+  margin: 0 0 1rem;
+  font-size: var(--step--1);
+  color: var(--signal);
+}
+
+.lg-key {
+  margin: 0;
+}
+
+.lg-key__row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.lg-key__row dt {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  color: var(--signal);
+}
+
+.lg-key__row dd {
+  margin: 0;
+}
+
+/* The key's own symbols are always visible */
+.lg-key .lg-mark {
+  transform: scale(1);
+}
+
+.lg-key__sample {
+  gap: 0.35rem;
+  color: var(--fg-muted);
+  font-size: 0.72rem;
+}
+
+.lg-key__dots {
+  display: block;
+  width: 1.2rem;
+  border-bottom: 1px dotted var(--fg-muted);
+  margin-top: 0.5em;
+}
+
+/* ---------- Trace readout ---------- */
+.lg-trace {
+  min-height: 10.5rem;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+}
+
+.lg-trace__hint {
+  margin: 0;
+  max-width: 28ch;
+  line-height: 1.5;
+}
+
+.lg-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lg-tags > li {
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--rule);
+  color: var(--fg);
+  font-size: 0.68rem;
+}
+
+/* ---------- Connector overlay ---------- */
+.lg-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 20;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .lg-strip {
+    clip-path: none;
+  }
+  .is-seen .lg-strip {
+    transition: none;
+  }
+  .lg-mark,
+  .is-seen .lg-mark {
+    transform: scale(1);
+    transition: none;
+  }
+  .lg-mark__ticks,
+  .lg-leader,
+  .lg-count,
+  .lg-overlay {
+    transition: none;
+  }
+  .lg-row:hover .lg-mark__ticks,
+  .lg-row.is-active .lg-mark__ticks {
+    transform: none;
+  }
+}

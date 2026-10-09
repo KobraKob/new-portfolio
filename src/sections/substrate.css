@@ -1,0 +1,140 @@
+/* Substrate section: surveyed sheet + text refinements.
+   Uses only existing theme tokens. Works in both Ground and Erevan. */
+
+/* ---------- Text column ---------- */
+.substrate-lede {
+  font-size: var(--step-1);
+  line-height: 1.45;
+  max-width: 38ch;
+}
+
+.substrate-marginalia {
+  position: relative;
+  border-top: 1px solid var(--rule);
+}
+
+/* Short signal rule sitting on the hairline, like a margin note flag */
+.substrate-marginalia__tick {
+  position: absolute;
+  top: -1px;
+  left: 0;
+  width: 2.5rem;
+  height: 2px;
+  background: var(--signal);
+}
+
+/* ---------- Sheet ---------- */
+.sheet {
+  position: relative;
+  margin: 0;
+  width: 100%;
+  max-width: 34rem;
+  border: 1px solid var(--rule);
+  background: transparent;
+}
+
+@media (min-width: 768px) {
+  .sheet {
+    margin-left: -2rem; /* let the sheet break the grid, like the original */
+  }
+}
+
+.sheet__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  cursor: crosshair;
+  touch-action: pan-y;
+}
+
+/* Draw-in: strokes use pathLength=1, so dash maths is the same everywhere */
+.sheet .draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+.sheet.is-drawn .draw {
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset var(--dur, 1.2s) cubic-bezier(0.65, 0, 0.35, 1)
+    var(--delay, 0s);
+}
+
+.sheet .fade {
+  opacity: 0;
+}
+
+.sheet.is-drawn .fade {
+  opacity: 1;
+  transition: opacity 0.8s ease var(--delay, 0s);
+}
+
+/* Elevation and origin labels get a knockout so they stay legible over lines */
+.sheet__elev text {
+  paint-order: stroke;
+  stroke: var(--bg, transparent);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
+/* Live cursor lines: appear only while the pointer is over the sheet */
+.sheet__live {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.sheet:hover .sheet__live {
+  opacity: 0.8;
+}
+
+/* Title block */
+.sheet__block {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.8fr;
+  border-top: 1px solid var(--rule);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+}
+
+.sheet__block > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.7rem 0.9rem;
+}
+
+.sheet__block > div + div {
+  border-left: 1px solid var(--rule);
+}
+
+.sheet__k {
+  color: var(--fg-muted);
+}
+
+.sheet__v {
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 480px) {
+  .sheet__block {
+    grid-template-columns: 1fr 1fr;
+  }
+  .sheet__block > div:last-child {
+    grid-column: 1 / -1;
+    border-left: 0;
+    border-top: 1px solid var(--rule);
+  }
+}
+
+/* Focus rings are not needed (decorative, aria-hidden), but respect motion */
+@media (prefers-reduced-motion: reduce) {
+  .sheet .draw {
+    stroke-dashoffset: 0;
+    transition: none;
+  }
+  .sheet .fade {
+    opacity: 1;
+    transition: none;
+  }
+}

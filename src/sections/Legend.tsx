@@ -1,230 +1,304 @@
-﻿import { getSkillsByCategory, getSkillSymbol, type Skill } from '../content/skills';
+﻿import { useEffect, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
+import { getSkillsByCategory, type Skill } from '../content/skills';
 import { copy } from '../content/copy';
-import { useState, useRef, useEffect } from 'react';
+import './legend.css';
 
+type SkillList = ReturnType<typeof getSkillsByCategory>[string];
+
+// Move into copy.ts if you want all text in one place
+const LABELS = {
+  mapKey: 'Map Key',
+  countKey: 'Projects using the skill',
+  trace: 'Trace',
+  hint: 'Hover or focus a skill to trace it to the projects that use it.',
+};
+
+/* ------------------------------------------------------------------ */
+/*  Reveal once when the legend scrolls into view                      */
+/* ------------------------------------------------------------------ */
+function useSeen<T extends Element>() {
+  const ref = useRef<T>(null);
+  const [seen, setSeen] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (typeof IntersectionObserver === 'undefined') {
+      setSeen(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setSeen(true);
+          io.disconnect();
+        }
+      },
+      { threshold: 0.15 }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  return [ref, seen] as const;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Map symbol: ring with registration ticks                           */
+/*  shipped = filled, working = half filled, anything else = open      */
+/* ------------------------------------------------------------------ */
+function Mark({ status, size = 20 }: { status: string; size?: number }) {
+  const s = String(status);
+  return (
+    <svg className="lg-mark" width={size} height={size} viewBox="0 0 20 20" aria-hidden="true">
+      <path
+        className="lg-mark__ticks"
+        d="M10,0v3M10,17v3M0,10h3M17,10h3"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        fill="none"
+      />
+      <circle cx="10" cy="10" r="6.2" fill="none" stroke="currentColor" strokeWidth="1.4" />
+      {s === 'shipped' && <circle cx="10" cy="10" r="6.2" fill="currentColor" />}
+      {s === 'working' && <path d="M10,3.8A6.2,6.2 0 0 0 10,16.2Z" fill="currentColor" />}
+    </svg>
+  );
+}
+
+/* Scale strip: tick marks, same as the other sheets */
+function Strip() {
+  return (
+    <svg className="lg-strip" height="12" aria-hidden="true">
+      <line x1="0" y1="6" x2="100%" y2="6" stroke="var(--fg)" strokeOpacity="0.55" strokeWidth="6" strokeDasharray="1 9" />
+      <line x1="0" y1="6" x2="100%" y2="6" stroke="var(--fg)" strokeWidth="12" strokeDasharray="1 49" />
+    </svg>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Section                                                            */
+/* ------------------------------------------------------------------ */
 export function Legend() {
   const skillsByCategory = getSkillsByCategory();
-  const [hoveredSkill, setHoveredSkill] = useState<Skill | null>(null);
-  const connectorRefs = useRef<Map<string, SVGLineElement>>(new Map());
+  const [active, setActive] = useState<Skill | null>(null);
+  const [ref, seen] = useSeen<HTMLDivElement>();
+
+  // Running index across categories, used to stagger the symbols
+  let running = 0;
+  const categories = copy.legend.categories.map((name) => {
+    const skills: SkillList = skillsByCategory[name] || [];
+    const start = running;
+    running += skills.length;
+    return { name, skills, start };
+  });
 
   return (
-    <section
-      id="legend"
-      className="section relative"
-      aria-labelledby="legend-title"
-    >
+    <section id="legend" className="section relative" aria-labelledby="legend-title">
       <div className="container">
         <header className="mb-16">
           <span className="font-mono uppercase-tracked text-[var(--signal)] block mb-4">
             {copy.legend.title}
           </span>
-          <h2 id="legend-title" className="font-display fraunces-ground text-[var(--fg)]" style={{ fontSize: 'var(--step-5)' }}>
+          <h2
+            id="legend-title"
+            className="font-display fraunces-ground text-[var(--fg)]"
+            style={{ fontSize: 'var(--step-5)' }}
+          >
             {copy.legend.subtitle}
           </h2>
         </header>
 
-        <div className="grid-12 gap-8">
+        <div ref={ref} className={`grid-12 gap-8 ${seen ? 'is-seen' : ''}`}>
+          {/* ------------------------- Skills sheet ------------------------ */}
           <div className="col-span-12 lg:col-span-8">
-            <div className="space-y-12" role="list" aria-label="Skills legend">
-              {copy.legend.categories.map((category) => (
-                <SkillCategory
-                  key={category}
-                  category={category}
-                  skills={skillsByCategory[category] || []}
-                  onHover={setHoveredSkill}
-                  connectorRefs={connectorRefs}
-                />
-              ))}
+            <div className="lg-sheet">
+              <div className="lg-sheet__inner">
+                <Strip />
+                <div className="lg-sheet__body">
+                  {categories.map((cat) => (
+                    <div key={cat.name} className="lg-cat">
+                      <h3 className="lg-cat__head font-mono uppercase-tracked">
+                        <span className="lg-cat__name">{cat.name}</span>
+                        <span className="lg-cat__rule" aria-hidden="true" />
+                        <span className="lg-cat__n" aria-hidden="true">
+                          {cat.skills.length}
+                        </span>
+                      </h3>
+
+                      <ul className="lg-rows" role="list" aria-label={cat.name}>
+                        {cat.skills.map((skill, i) => (
+                          <li key={skill.id}>
+                            <button
+                              type="button"
+                              data-skill-id={skill.id}
+                              className={`lg-row ${active?.id === skill.id ? 'is-active' : ''}`}
+                              style={{ ['--i' as string]: Math.min(cat.start + i, 40) } as CSSProperties}
+                              onMouseEnter={() => setActive(skill)}
+                              onMouseLeave={() => setActive(null)}
+                              onFocus={() => setActive(skill)}
+                              onBlur={() => setActive(null)}
+                              aria-label={`${skill.name}, ${copy.legend.symbolKey[skill.status]}; used in ${skill.projects.join(', ')}`}
+                            >
+                              <Mark status={skill.status} />
+                              <span className="lg-name font-display fraunces-ground text-[var(--fg)]">
+                                {skill.name}
+                              </span>
+                              <span className="lg-leader" aria-hidden="true" />
+                              <span className="lg-count font-mono" aria-hidden="true">
+                                {skill.projects.length}
+                              </span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="col-span-12 lg:col-span-4">
-            <LegendKey />
-            <ProjectConnectors
-              hoveredSkill={hoveredSkill}
-              connectorRefs={connectorRefs}
-            />
-          </div>
-        </div>
+          {/* --------------------------- Map key --------------------------- */}
+          <aside className="col-span-12 lg:col-span-4">
+            <div className="lg-key-wrap">
+              <div className="lg-sheet">
+                <div className="lg-sheet__inner">
+                  <Strip />
+                  <div className="lg-sheet__body">
+                    <h3 className="lg-key__title font-mono uppercase-tracked">{LABELS.mapKey}</h3>
 
-        <svg
-          className="absolute inset-0 -z-10 pointer-events-none overflow-visible"
-          style={{ width: '100%', height: '100%' }}
-          aria-hidden="true"
-        >
-          {hoveredSkill?.projects.map((projectSlug) => (
-            <line
-              key={projectSlug}
-              ref={(el) => {
-                if (el) connectorRefs.current.set(`${hoveredSkill.id}-${projectSlug}`, el);
-              }}
-              x1="0" y1="0" x2="0" y2="0"
-              stroke="var(--signal)"
-              strokeWidth="1"
-              strokeDasharray="4,4"
-              opacity="0"
-              vectorEffect="non-scaling-stroke"
-              className="connector-line"
-            />
-          ))}
-        </svg>
+                    <dl className="lg-key">
+                      {Object.entries(copy.legend.symbolKey).map(([status, description]) => (
+                        <div key={status} className="lg-key__row">
+                          <dt>
+                            <Mark status={status} size={28} />
+                          </dt>
+                          <dd className="font-body text-[var(--fg-muted)] text-[var(--step-0)]">{description}</dd>
+                        </div>
+                      ))}
+                      <div className="lg-key__row">
+                        <dt className="lg-key__sample font-mono" aria-hidden="true">
+                          <span className="lg-key__dots" />3
+                        </dt>
+                        <dd className="font-body text-[var(--fg-muted)] text-[var(--step-0)]">{LABELS.countKey}</dd>
+                      </div>
+                    </dl>
+
+                    <div className="lg-trace">
+                      <h4 className="font-mono uppercase-tracked text-[var(--signal)] text-[var(--step--1)] mb-3">
+                        {LABELS.trace}
+                      </h4>
+                      {active ? (
+                        <>
+                          <p
+                            className="font-display fraunces-ground text-[var(--fg)] mb-1"
+                            style={{ fontSize: 'var(--step-2)', lineHeight: 1 }}
+                          >
+                            {active.name}
+                          </p>
+                          <p className="font-mono uppercase-tracked text-[var(--fg-muted)] text-[var(--step--1)] mb-4">
+                            {copy.legend.symbolKey[active.status]}
+                          </p>
+                          <ul className="lg-tags" role="list">
+                            {active.projects.map((p) => (
+                              <li key={p} className="font-mono uppercase-tracked">
+                                {p.toUpperCase()}
+                              </li>
+                            ))}
+                          </ul>
+                        </>
+                      ) : (
+                        <p className="lg-trace__hint text-[var(--fg-muted)] text-[var(--step-0)]">{LABELS.hint}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
       </div>
+
+      <Connectors skill={active} />
     </section>
   );
 }
 
-interface SkillCategoryProps {
-  category: string;
-  skills: ReturnType<typeof getSkillsByCategory>[string];
-  onHover: (skill: Skill | null) => void;
-  connectorRefs: React.RefObject<Map<string, SVGLineElement>>;
-}
+/* ------------------------------------------------------------------ */
+/*  Connectors: viewport-fixed lines from the skill to each project    */
+/*  Targets are found by [data-project-id="<slug>"] anywhere on page   */
+/* ------------------------------------------------------------------ */
+function Connectors({ skill }: { skill: Skill | null }) {
+  const svgRef = useRef<SVGSVGElement>(null);
 
-function SkillCategory({ category, skills, onHover, connectorRefs }: SkillCategoryProps) {
-  return (
-    <article className="relative" role="listitem">
-      <h3 className="font-mono uppercase-tracked text-[var(--signal)] text-[var(--step-0)] mb-6 pb-2 border-b border-[var(--rule)]">
-        {category}
-      </h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4" role="list">
-        {skills.map((skill) => (
-          <SkillItem
-            key={skill.id}
-            skill={skill}
-            onHover={onHover}
-            connectorRefs={connectorRefs}
-          />
-        ))}
-      </div>
-    </article>
-  );
-}
-
-interface SkillItemProps {
-  skill: Skill;
-  onHover: (skill: Skill | null) => void;
-  connectorRefs: React.RefObject<Map<string, SVGLineElement>>;
-}
-
-function SkillItem({ skill, onHover }: SkillItemProps) {
-  const symbol = getSkillSymbol(skill.status);
-
-  return (
-    <button
-      type="button"
-      className="group relative flex items-start gap-4 p-4 bg-[var(--bg)] border border-[var(--rule)] hover:border-[var(--signal)] transition-colors hard-shadow"
-      onMouseEnter={() => onHover(skill)}
-      onMouseLeave={() => onHover(null)}
-      onFocus={() => onHover(skill)}
-      onBlur={() => onHover(null)}
-      aria-label={`${skill.name}, ${copy.legend.symbolKey[skill.status]}; used in ${skill.projects.join(', ')}`}
-    >
-      <span
-        className="font-mono text-[var(--step-2)] text-[var(--signal)] shrink-0 mt-0.5"
-        aria-hidden="true"
-      >
-        {symbol}
-      </span>
-      <div className="flex-1 min-w-0">
-        <h4 className="font-display fraunces-ground text-[var(--fg)] text-[var(--step-0)] mb-1 truncate">
-          {skill.name}
-        </h4>
-        <p className="font-mono uppercase-tracked text-[var(--fg-muted)] text-[var(--step--1)]">
-          {copy.legend.symbolKey[skill.status]}
-        </p>
-        <div className="mt-2 flex flex-wrap gap-1">
-          {skill.projects.slice(0, 3).map((project) => (
-            <span
-              key={project}
-              className="font-mono uppercase-tracked text-[var(--step--1)] px-1.5 py-0.5 bg-[var(--rule)] text-[var(--fg-muted)] text-[var(--fg)]/60"
-            >
-              {project.toUpperCase()}
-            </span>
-          ))}
-          {skill.projects.length > 3 && (
-            <span className="font-mono uppercase-tracked text-[var(--step--1)] text-[var(--fg-muted)]">
-              +{skill.projects.length - 3}
-            </span>
-          )}
-        </div>
-      </div>
-    </button>
-  );
-}
-
-function LegendKey() {
-  return (
-    <div className="sticky top-24 bg-[var(--bg)] border border-[var(--rule)] p-6 hard-shadow">
-      <h3 className="font-mono uppercase-tracked text-[var(--signal)] text-[var(--step-0)] mb-6 pb-3 border-b border-[var(--rule)]">
-        Map Key
-      </h3>
-      <dl className="space-y-4" role="list">
-        {Object.entries(copy.legend.symbolKey).map(([status, description]) => (
-          <div key={status} className="flex items-center gap-3">
-            <dt className="font-mono text-[var(--step-2)] text-[var(--signal)] shrink-0">
-              {status === 'shipped' ? '●' : status === 'working' ? '◐' : '○'}
-            </dt>
-            <dd className="font-body text-[var(--fg-muted)] text-[var(--step-0)]">
-              {description}
-            </dd>
-          </div>
-        ))}
-      </dl>
-    </div>
-  );
-}
-
-interface ProjectConnectorsProps {
-  hoveredSkill: Skill | null;
-  connectorRefs: React.RefObject<Map<string, SVGLineElement>>;
-}
-
-function ProjectConnectors({ hoveredSkill, connectorRefs }: ProjectConnectorsProps) {
   useEffect(() => {
-    if (!hoveredSkill) return;
-    const updateConnectors = () => {
-      const skillEl = document.querySelector(`[data-skill-id="${hoveredSkill.id}"]`) as HTMLElement;
-      if (!skillEl) return;
+    const svg = svgRef.current;
+    if (!svg) return;
+    svg.replaceChildren();
+    svg.style.opacity = '0';
+    if (!skill) return;
 
-      const skillRect = skillEl.getBoundingClientRect();
-      const containerRect = skillEl.closest('.container')?.getBoundingClientRect();
-      if (!containerRect) return;
+    const NS = 'http://www.w3.org/2000/svg';
+    const parts = skill.projects.map((slug) => {
+      const g = document.createElementNS(NS, 'g');
+      const line = document.createElementNS(NS, 'line');
+      line.style.stroke = 'var(--signal)';
+      line.setAttribute('stroke-width', '1.2');
+      line.setAttribute('stroke-dasharray', '2 5');
+      line.setAttribute('stroke-linecap', 'round');
+      const dot = document.createElementNS(NS, 'circle');
+      dot.setAttribute('r', '3.5');
+      dot.style.fill = 'var(--signal)';
+      g.append(line, dot);
+      g.setAttribute('opacity', '0');
+      svg.appendChild(g);
+      return { slug, g, line, dot };
+    });
 
-      hoveredSkill.projects.forEach((projectSlug) => {
-        const projectEl = document.querySelector(`[data-project-id="${projectSlug}"]`) as HTMLElement;
-        if (!projectEl) return;
+    let raf = 0;
+    const draw = () => {
+      raf = 0;
+      const from = document.querySelector<HTMLElement>(`[data-skill-id="${CSS.escape(String(skill.id))}"]`);
+      if (!from) return;
+      const a = from.getBoundingClientRect();
+      const sy = a.top + a.height / 2;
 
-        const projectRect = projectEl.getBoundingClientRect();
-        const line = connectorRefs.current.get(`${hoveredSkill.id}-${projectSlug}`);
-
-        if (line) {
-          const x1 = skillRect.right - containerRect.left;
-          const y1 = skillRect.top + skillRect.height / 2 - containerRect.top;
-          const x2 = projectRect.left - containerRect.left;
-          const y2 = projectRect.top + projectRect.height / 2 - containerRect.top;
-
-          line.setAttribute('x1', x1.toString());
-          line.setAttribute('y1', y1.toString());
-          line.setAttribute('x2', x2.toString());
-          line.setAttribute('y2', y2.toString());
-          line.style.opacity = '0.6';
+      for (const { slug, g, line, dot } of parts) {
+        const to = document.querySelector<HTMLElement>(`[data-project-id="${CSS.escape(slug)}"]`);
+        if (!to) {
+          g.setAttribute('opacity', '0');
+          continue;
         }
-      });
+        const b = to.getBoundingClientRect();
+        const tx = b.left + b.width / 2;
+        const ty = b.top + b.height / 2;
+        const sx = tx > a.left + a.width / 2 ? a.right : a.left;
+        line.setAttribute('x1', String(sx));
+        line.setAttribute('y1', String(sy));
+        line.setAttribute('x2', String(tx));
+        line.setAttribute('y2', String(ty));
+        dot.setAttribute('cx', String(tx));
+        dot.setAttribute('cy', String(ty));
+        g.setAttribute('opacity', '0.8');
+      }
+      svg.style.opacity = '1';
+    };
+    const schedule = () => {
+      if (!raf) raf = requestAnimationFrame(draw);
     };
 
-    updateConnectors();
-    window.addEventListener('resize', updateConnectors);
-    window.addEventListener('scroll', updateConnectors);
-
+    draw();
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
     return () => {
-      window.removeEventListener('resize', updateConnectors);
-      window.removeEventListener('scroll', updateConnectors);
-      hoveredSkill.projects.forEach((projectSlug) => {
-        const line = connectorRefs.current.get(`${hoveredSkill.id}-${projectSlug}`);
-        if (line) line.style.opacity = '0';
-      });
+      if (raf) cancelAnimationFrame(raf);
+      window.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', schedule);
+      svg.replaceChildren();
+      svg.style.opacity = '0';
     };
-  }, [hoveredSkill, connectorRefs]);
+  }, [skill]);
 
-  return null;
+  return <svg ref={svgRef} className="lg-overlay" aria-hidden="true" />;
 }
