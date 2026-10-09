@@ -1,7 +1,7 @@
-﻿import { useRef, useEffect, useState } from 'react';
-import { copy } from '../content/copy';
-import { LiveClock } from '../components/LiveClock';
-import { useTheme } from '../app/ThemeProvider';
+﻿import { useRef, useEffect, useState } from "react";
+import { copy } from "../content/copy";
+import { LiveClock } from "../components/LiveClock";
+import { useTheme } from "../app/ThemeProvider";
 
 export function Index() {
   const [coordinates, setCoordinates] = useState({ lat: 12.9716, lng: 77.5946 });
@@ -13,88 +13,103 @@ export function Index() {
       const lng = 77.5946 + (e.clientX / window.innerWidth - 0.5) * 0.01;
       setCoordinates({ lat, lng });
     };
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
   return (
     <section
       id="index"
-      className="section relative min-h-[100svh] flex items-start justify-center overflow-hidden"
+      className="section relative min-h-[100svh] flex items-start justify-center overflow-x-clip"
       aria-labelledby="hero-title"
     >
       <div className="container relative z-10 w-full">
-        <div className="grid-12">
-          <div className="col-span-12 md:col-span-5 lg:col-span-4 xl:col-span-3 relative z-20 animate-fade-in overflow-hidden">
-            <h1
-              id="hero-title"
-              className="hero-title font-display fraunces-ground text-[var(--fg)] leading-[0.9] tracking-[-0.02em] mb-6 whitespace-nowrap overflow-visible"
-              aria-label="Balavanth"
-              style={{ marginRight: '-8vw' }}
-            >
-              {copy.hero.name}
-            </h1>
+        {/* Name bleeds across the full grid — absolute positioned behind the content row */}
+        <div className="relative">
+          {/* Hero name — full bleed row, sits above the content grid */}
+          <h1
+            id="hero-title"
+            className="font-display fraunces-ground text-[var(--fg)] leading-[0.88] tracking-[-0.03em] mb-8 whitespace-nowrap"
+            style={{
+              fontSize: "clamp(3.5rem, 11vw, 11rem)",
+              overflowX: "visible",
+              /* intentionally bleeds ~8% past viewport right edge per spec */
+              marginRight: "-5vw",
+            }}
+            aria-label="Balavanth"
+          >
+            {copy.hero.name}
+          </h1>
 
-            <p className="font-mono uppercase-tracked text-[var(--fg-muted)] mb-8 max-w-none">
-              {copy.hero.role}
-            </p>
+          {/* Content row — text left, terrain right */}
+          <div className="grid-12">
+            {/* Left: role, status, actions, marginalia */}
+            <div className="col-span-12 md:col-span-5 lg:col-span-4 relative z-20 animate-fade-in">
+              <p className="font-mono uppercase-tracked text-[var(--fg-muted)] mb-8 max-w-[38ch]">
+                {copy.hero.role}
+              </p>
 
-            <div className="flex items-center gap-3 mb-8 animate-slide-up stagger-1">
-              <span
-                className="w-2 h-2 rounded-full bg-[var(--counter)] animate-pulse"
-                aria-hidden="true"
-              />
-              <span className="font-mono uppercase-tracked text-[var(--counter)]">
-                {copy.hero.status}
-              </span>
-            </div>
-
-            <div className="flex flex-wrap gap-4 animate-slide-up stagger-2">
-              <a
-                href="/waypoints"
-                onClick={(e) => {
-                  const el = document.getElementById('waypoints');
-                  if (el) {
-                    e.preventDefault();
-                    el.scrollIntoView({ behavior: 'smooth' });
-                  }
-                }}
-                className="px-6 py-3 bg-[var(--signal)] text-[var(--bg)] font-body font-medium text-[var(--step-0)] hover:opacity-90 transition-opacity hard-shadow"
-              >
-                {copy.hero.actions.work}
-              </a>
-              <a
-                href="/Balavanth_Resume.pdf"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-6 py-3 border-2 border-[var(--rule)] text-[var(--fg)] font-body font-medium text-[var(--step-0)] hover:border-[var(--fg)] hover:text-[var(--fg)] transition-colors hard-shadow"
-              >
-                {copy.hero.actions.resume}
-              </a>
-              {copy.meta.email && (
-                <a
-                  href={`mailto:${copy.meta.email}`}
-                  className="px-6 py-3 border-2 border-[var(--rule)] text-[var(--fg)] font-body font-medium text-[var(--step-0)] hover:border-[var(--fg)] hover:text-[var(--fg)] transition-colors hard-shadow"
-                >
-                  {copy.hero.actions.email}
-                </a>
-              )}
-            </div>
-
-            <div className="mt-16 pt-8 border-t border-[var(--rule)] animate-slide-up stagger-3">
-              <div className="flex flex-wrap items-center gap-6 font-mono uppercase-tracked text-[var(--fg-muted)]">
-                <span>
-                  {coordinates.lat.toFixed(4)}° N, {coordinates.lng.toFixed(4)}° E
+              <div className="flex items-center gap-3 mb-8 animate-slide-up stagger-1">
+                <span
+                  className="w-2 h-2 rounded-full bg-[var(--counter)] animate-pulse"
+                  aria-hidden="true"
+                />
+                <span className="font-mono uppercase-tracked text-[var(--counter)] text-[var(--step--1)]">
+                  {copy.hero.status}
                 </span>
-                <LiveClock />
-                <span>{copy.hero.marginalia.sheet}</span>
+              </div>
+
+              <div className="flex flex-wrap gap-4 animate-slide-up stagger-2">
+                <a
+                  href="/waypoints"
+                  onClick={(e) => {
+                    const el = document.getElementById("waypoints");
+                    if (el) {
+                      e.preventDefault();
+                      el.scrollIntoView({ behavior: "smooth" });
+                    }
+                  }}
+                  className="px-6 py-3 bg-[var(--signal)] text-[var(--bg)] font-body font-medium text-[var(--step-0)] hover:opacity-90 transition-opacity hard-shadow"
+                >
+                  {copy.hero.actions.work}
+                </a>
+                <a
+                  href="/Balavanth_Resume.pdf"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-6 py-3 border-2 border-[var(--rule)] text-[var(--fg)] font-body font-medium text-[var(--step-0)] hover:border-[var(--fg)] transition-colors hard-shadow"
+                >
+                  {copy.hero.actions.resume}
+                </a>
+                {copy.meta.email && (
+                  <a
+                    href={`mailto:${copy.meta.email}`}
+                    className="px-6 py-3 border-2 border-[var(--rule)] text-[var(--fg)] font-body font-medium text-[var(--step-0)] hover:border-[var(--fg)] transition-colors hard-shadow"
+                  >
+                    {copy.hero.actions.email}
+                  </a>
+                )}
+              </div>
+
+              <div className="mt-16 pt-8 border-t border-[var(--rule)] animate-slide-up stagger-3">
+                <div className="flex flex-wrap items-center gap-6 font-mono uppercase-tracked text-[var(--fg-muted)] text-[var(--step--1)]">
+                  <span>
+                    {coordinates.lat.toFixed(4)}° N, {coordinates.lng.toFixed(4)}° E
+                  </span>
+                  <LiveClock />
+                  <span>{copy.hero.marginalia.sheet}</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="col-span-12 md:col-span-7 lg:col-span-8 xl:col-span-9 relative animate-fade-in stagger-4" aria-hidden="true">
-            <div className="relative aspect-[4/3] md:aspect-[16/9] lg:aspect-[2/1]">
-              <HeroTerrain theme={theme} />
+            {/* Right: terrain art */}
+            <div
+              className="col-span-12 md:col-span-7 lg:col-span-8 relative animate-fade-in stagger-4"
+              aria-hidden="true"
+            >
+              <div className="relative aspect-[4/3] md:aspect-[16/9] lg:aspect-[2/1]">
+                <HeroTerrain theme={theme} />
+              </div>
             </div>
           </div>
         </div>
@@ -103,8 +118,8 @@ export function Index() {
   );
 }
 
-function HeroTerrain({ theme }: { theme: 'ground' | 'erevan' }) {
-  const isGround = theme === 'ground';
+function HeroTerrain({ theme }: { theme: "ground" | "erevan" }) {
+  const isGround = theme === "ground";
   const svgRef = useRef<SVGSVGElement>(null);
   const layer0Ref = useRef<SVGGElement>(null);
   const layer1Ref = useRef<SVGGElement>(null);
@@ -114,7 +129,7 @@ function HeroTerrain({ theme }: { theme: 'ground' | 'erevan' }) {
   const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (prefersReduced) return;
 
     const MULTIPLIERS = [0.01, 0.025, 0.05];
@@ -145,11 +160,11 @@ function HeroTerrain({ theme }: { theme: 'ground' | 'erevan' }) {
       rafRef.current = requestAnimationFrame(tick);
     };
 
-    window.addEventListener('mousemove', onMouseMove, { passive: true });
+    window.addEventListener("mousemove", onMouseMove, { passive: true });
     rafRef.current = requestAnimationFrame(tick);
 
     return () => {
-      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener("mousemove", onMouseMove);
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
     };
   }, []);
@@ -161,9 +176,11 @@ function HeroTerrain({ theme }: { theme: 'ground' | 'erevan' }) {
       viewBox="0 0 800 400"
       preserveAspectRatio="xMidYMid slice"
       role="img"
-      aria-label={isGround
-        ? 'Road network with parallel lane strokes, dashed centerlines, and junction nodes'
-        : 'Contour landmass with coastline, hachure hatching, and compass rose'}
+      aria-label={
+        isGround
+          ? "Road network with parallel lane strokes, dashed centerlines, and junction nodes"
+          : "Contour landmass with coastline, hachure hatching, and compass rose"
+      }
     >
       <defs>
         <pattern id="hatch-ground" patternUnits="userSpaceOnUse" width="4" height="4">
@@ -178,21 +195,18 @@ function HeroTerrain({ theme }: { theme: 'ground' | 'erevan' }) {
 
       {isGround ? (
         <>
-          {/* Layer 0 — slowest, background roads */}
-          <g ref={layer0Ref} style={{ willChange: 'transform' }}>
+          <g ref={layer0Ref} style={{ willChange: "transform" }}>
             <path d="M0,320 Q200,300 400,320 T800,320" stroke="var(--rule)" strokeWidth="1" fill="none" vectorEffect="non-scaling-stroke" opacity="0.4" />
             <path d="M0,80 Q200,100 400,80 T800,80" stroke="var(--rule)" strokeWidth="1" fill="none" vectorEffect="non-scaling-stroke" opacity="0.4" />
             <path d="M0,340 Q200,320 400,340 T800,340" stroke="var(--rule)" strokeWidth="1" fill="none" vectorEffect="non-scaling-stroke" opacity="0.3" />
           </g>
-          {/* Layer 1 — mid */}
-          <g ref={layer1Ref} style={{ willChange: 'transform' }}>
+          <g ref={layer1Ref} style={{ willChange: "transform" }}>
             <path d="M50,200 Q200,150 350,200 T650,200" stroke="var(--fg)" strokeWidth="1.5" strokeDasharray="20,10" fill="none" vectorEffect="non-scaling-stroke" opacity="0.6" />
             <path d="M50,220 Q200,170 350,220 T650,220" stroke="var(--fg)" strokeWidth="1.5" strokeDasharray="20,10" fill="none" vectorEffect="non-scaling-stroke" opacity="0.6" />
             <path d="M50,180 Q200,130 350,180 T650,180" stroke="var(--signal)" strokeWidth="2" strokeDasharray="10,5" fill="none" vectorEffect="non-scaling-stroke" />
             <path d="M50,240 Q200,190 350,240 T650,240" stroke="var(--signal)" strokeWidth="2" strokeDasharray="10,5" fill="none" vectorEffect="non-scaling-stroke" />
           </g>
-          {/* Layer 2 — fastest, foreground nodes */}
-          <g ref={layer2Ref} style={{ willChange: 'transform' }}>
+          <g ref={layer2Ref} style={{ willChange: "transform" }}>
             <circle cx="200" cy="175" r="5" fill="var(--signal)" stroke="var(--bg)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
             <circle cx="350" cy="200" r="5" fill="var(--signal)" stroke="var(--bg)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
             <circle cx="500" cy="210" r="5" fill="var(--signal)" stroke="var(--bg)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
@@ -205,19 +219,16 @@ function HeroTerrain({ theme }: { theme: 'ground' | 'erevan' }) {
         </>
       ) : (
         <>
-          {/* Erevan layer 0 — background contours */}
-          <g ref={layer0Ref} style={{ willChange: 'transform' }}>
+          <g ref={layer0Ref} style={{ willChange: "transform" }}>
             <path d="M50,310 Q200,240 400,290 Q550,330 700,280 Q800,250 800,310" stroke="var(--fg)" strokeWidth="1" fill="none" vectorEffect="non-scaling-stroke" opacity="0.4" />
             <path d="M50,340 Q200,280 450,320 Q600,350 800,330" stroke="var(--fg)" strokeWidth="1" fill="none" vectorEffect="non-scaling-stroke" opacity="0.3" />
           </g>
-          {/* Erevan layer 1 — mid coastline */}
-          <g ref={layer1Ref} style={{ willChange: 'transform' }}>
+          <g ref={layer1Ref} style={{ willChange: "transform" }}>
             <path d="M50,250 Q150,180 300,220 Q450,260 600,200 Q700,150 750,250" stroke="var(--fg)" strokeWidth="2" fill="url(#hatch-erevan)" vectorEffect="non-scaling-stroke" opacity="0.7" />
             <path d="M50,280 Q180,200 350,260 Q500,300 650,240 Q750,200 800,280" stroke="var(--fg)" strokeWidth="1.5" fill="none" vectorEffect="non-scaling-stroke" opacity="0.6" />
             <path d="M100,220 Q250,160 400,190 Q550,220 700,180" stroke="var(--signal)" strokeWidth="1.5" fill="none" vectorEffect="non-scaling-stroke" />
           </g>
-          {/* Erevan layer 2 — foreground compass */}
-          <g ref={layer2Ref} style={{ willChange: 'transform' }}>
+          <g ref={layer2Ref} style={{ willChange: "transform" }}>
             <path d="M150,190 Q300,130 450,170 Q600,200 750,160" stroke="var(--signal)" strokeWidth="1" strokeDasharray="8,4" fill="none" vectorEffect="non-scaling-stroke" />
             <g transform="translate(680, 90) rotate(-15)">
               <path d="M0,-22 L0,22 M-22,0 L22,0" stroke="var(--signal)" strokeWidth="2" fill="none" vectorEffect="non-scaling-stroke" />
