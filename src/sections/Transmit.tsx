@@ -36,7 +36,7 @@ export function Transmit() {
             <a
               href={`mailto:${copy.meta.email}`}
               className="block mb-8 font-display fraunces-ground text-[var(--fg)] hover:text-[var(--signal)] transition-colors break-all"
-              style={{ fontSize: 'var(--step-5)', lineHeight: '1.1', textDecoration: 'underline', textDecorationColor: 'var(--signal)', textDecorationThickness: '3px', textUnderlineOffset: '6px' }}
+              style={{ fontSize: 'clamp(1.8rem, 5vw, 3.5rem)', lineHeight: '1.15', wordBreak: 'break-all', textDecoration: 'underline', textDecorationColor: 'var(--signal)', textDecorationThickness: '3px', textUnderlineOffset: '6px' }}
             >
               {copy.meta.email}
             </a>
@@ -111,3 +111,4 @@ export function Transmit() {
     </section>
   );
 }
+

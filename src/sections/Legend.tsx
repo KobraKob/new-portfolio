@@ -8,8 +8,8 @@ export function Legend() {
   const connectorRefs = useRef<Map<string, SVGLineElement>>(new Map());
 
   return (
-    <section 
-      id="legend" 
+    <section
+      id="legend"
       className="section relative"
       aria-labelledby="legend-title"
     >
@@ -18,37 +18,45 @@ export function Legend() {
           <span className="font-mono uppercase-tracked text-[var(--signal)] block mb-4">
             {copy.legend.title}
           </span>
-          <h2 id="legend-title" className="font-display fraunces-ground text-[var(--fg)]" style={{ fontSize: 'var(--step-5)' }}>
+          <h2
+            id="legend-title"
+            className="font-display fraunces-ground text-[var(--fg)]"
+            style={{ fontSize: 'var(--step-5)' }}
+          >
             {copy.legend.subtitle}
           </h2>
         </header>
 
-        <div className="grid-12 gap-8">
-          <div className="col-span-12 lg:col-span-8">
-            <div className="space-y-12" role="list" aria-label="Skills legend">
-              {copy.legend.categories.map((category) => (
-                <SkillCategory 
-                  key={category} 
-                  category={category} 
-                  skills={skillsByCategory[category] || []}
-                  onHover={setHoveredSkill}
-                  connectorRefs={connectorRefs}
-                />
-              ))}
+        {/* Map Key — compact, above the skill rows */}
+        <div className="mb-12 flex flex-wrap gap-6 items-center pb-6 border-b border-[var(--rule)]">
+          <span className="font-mono uppercase-tracked text-[var(--signal)] text-[var(--step--1)]">
+            Map Key
+          </span>
+          {Object.entries(copy.legend.symbolKey).map(([status, description]) => (
+            <div key={status} className="flex items-center gap-2">
+              <span className="font-mono text-[var(--step-1)] text-[var(--signal)] leading-none" aria-hidden="true">
+                {status === 'shipped' ? '●' : status === 'working' ? '◐' : '○'}
+              </span>
+              <span className="font-body text-[var(--fg-muted)] text-[var(--step-0)]">{description}</span>
             </div>
-          </div>
-
-          <div className="col-span-12 lg:col-span-4">
-            <LegendKey />
-            <ProjectConnectors 
-              hoveredSkill={hoveredSkill} 
-              connectorRefs={connectorRefs} 
-            />
-          </div>
+          ))}
         </div>
 
-        <svg 
-          className="absolute inset-0 -z-10 pointer-events-none overflow-visible" 
+        {/* Skill categories */}
+        <div className="space-y-10" role="list" aria-label="Skills legend">
+          {copy.legend.categories.map((category) => (
+            <SkillCategory
+              key={category}
+              category={category}
+              skills={skillsByCategory[category] || []}
+              onHover={setHoveredSkill}
+              connectorRefs={connectorRefs}
+            />
+          ))}
+        </div>
+
+        <svg
+          className="absolute inset-0 -z-10 pointer-events-none overflow-visible"
           style={{ width: '100%', height: '100%' }}
           aria-hidden="true"
         >
@@ -83,14 +91,17 @@ interface SkillCategoryProps {
 function SkillCategory({ category, skills, onHover, connectorRefs }: SkillCategoryProps) {
   return (
     <article className="relative" role="listitem">
-      <h3 className="font-mono uppercase-tracked text-[var(--signal)] text-[var(--step-0)] mb-6 pb-2 border-b border-[var(--rule)]">
+      {/* Category heading */}
+      <h3 className="font-mono uppercase-tracked text-[var(--signal)] text-[var(--step--1)] mb-4">
         {category}
       </h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4" role="list">
+
+      {/* Skills as horizontal rows — no boxes, just clean rows with a divider */}
+      <div role="list" className="border-t border-[var(--rule)]">
         {skills.map((skill) => (
-          <SkillItem 
-            key={skill.id} 
-            skill={skill} 
+          <SkillRow
+            key={skill.id}
+            skill={skill}
             onHover={onHover}
             connectorRefs={connectorRefs}
           />
@@ -106,71 +117,57 @@ interface SkillItemProps {
   connectorRefs: React.RefObject<Map<string, SVGLineElement>>;
 }
 
-function SkillItem({ skill, onHover }: SkillItemProps) {
+function SkillRow({ skill, onHover }: SkillItemProps) {
   const symbol = getSkillSymbol(skill.status);
-  
+
   return (
     <button
       type="button"
-      className="group relative flex items-start gap-4 p-4 bg-[var(--bg)] border border-[var(--rule)] hover:border-[var(--signal)] transition-colors hard-shadow"
+      role="listitem"
+      className="group w-full flex items-center gap-4 py-3 px-2 border-b border-[var(--rule)] hover:bg-[var(--rule)]/30 transition-colors text-left"
       onMouseEnter={() => onHover(skill)}
       onMouseLeave={() => onHover(null)}
       onFocus={() => onHover(skill)}
       onBlur={() => onHover(null)}
-      aria-label={`${skill.name}, ${copy.legend.symbolKey[skill.status]}; used in ${skill.projects.join(', ')}`}
+      aria-label={`${skill.name}, ${copy.legend.symbolKey[skill.status]}${skill.projects.length ? `; used in ${skill.projects.join(', ')}` : ''}`}
     >
-      <span 
-        className="font-mono text-[var(--step-2)] text-[var(--signal)] shrink-0 mt-0.5"
+      {/* Symbol */}
+      <span
+        className="font-mono text-[var(--step-1)] text-[var(--signal)] shrink-0 w-6 text-center leading-none"
         aria-hidden="true"
       >
         {symbol}
       </span>
-      <div className="flex-1 min-w-0">
-        <h4 className="font-display fraunces-ground text-[var(--fg)] text-[var(--step-0)] mb-1 truncate">
-          {skill.name}
-        </h4>
-        <p className="font-mono uppercase-tracked text-[var(--fg-muted)] text-[var(--step--1)]">
-          {copy.legend.symbolKey[skill.status]}
-        </p>
-        <div className="mt-2 flex flex-wrap gap-1">
-          {skill.projects.slice(0, 3).map((project) => (
-            <span 
-              key={project} 
-              className="font-mono uppercase-tracked text-[var(--step--1)] px-1.5 py-0.5 bg-[var(--rule)] text-[var(--fg-muted)] text-[var(--fg)]/60"
+
+      {/* Name — takes remaining space */}
+      <span className="flex-1 font-display fraunces-ground text-[var(--fg)] text-[var(--step-0)] group-hover:text-[var(--signal)] transition-colors">
+        {skill.name}
+      </span>
+
+      {/* Status label */}
+      <span className="hidden sm:block font-mono uppercase-tracked text-[var(--fg-muted)] text-[var(--step--1)] shrink-0 w-48 text-right">
+        {copy.legend.symbolKey[skill.status]}
+      </span>
+
+      {/* Project tags */}
+      {skill.projects.length > 0 && (
+        <div className="hidden md:flex gap-1 shrink-0">
+          {skill.projects.slice(0, 2).map((project) => (
+            <span
+              key={project}
+              className="font-mono uppercase-tracked text-[var(--step--1)] px-2 py-0.5 bg-[var(--rule)] text-[var(--fg-muted)]"
             >
               {project.toUpperCase()}
             </span>
           ))}
-          {skill.projects.length > 3 && (
-            <span className="font-mono uppercase-tracked text-[var(--step--1)] text-[var(--fg-muted)]">
-              +{skill.projects.length - 3}
+          {skill.projects.length > 2 && (
+            <span className="font-mono uppercase-tracked text-[var(--step--1)] text-[var(--fg-muted)] px-1">
+              +{skill.projects.length - 2}
             </span>
           )}
         </div>
-      </div>
+      )}
     </button>
-  );
-}
-
-function LegendKey() {
-  return (
-    <div className="sticky top-24 bg-[var(--bg)] border border-[var(--rule)] p-6 hard-shadow">
-      <h3 className="font-mono uppercase-tracked text-[var(--signal)] text-[var(--step-0)] mb-6 pb-3 border-b border-[var(--rule)]">
-        Map Key
-      </h3>
-      <dl className="space-y-4" role="list">
-        {Object.entries(copy.legend.symbolKey).map(([status, description]) => (
-          <div key={status} className="flex items-center gap-3">
-            <dt className="font-mono text-[var(--step-2)] text-[var(--signal)] shrink-0">
-              {status === 'shipped' ? 'â—' : status === 'working' ? 'â—' : 'â—‹'}
-            </dt>
-            <dd className="font-body text-[var(--fg-muted)] text-[var(--step-0)]">
-              {description}
-            </dd>
-          </div>
-        ))}
-      </dl>
-    </div>
   );
 }
 
@@ -182,10 +179,6 @@ interface ProjectConnectorsProps {
 function ProjectConnectors({ hoveredSkill, connectorRefs }: ProjectConnectorsProps) {
   useEffect(() => {
     if (!hoveredSkill) return;
-    const skillElements = document.querySelectorAll('[data-skill-id]');
-    const projectElements = document.querySelectorAll('[data-project-id]');
-    
-    if (skillElements.length === 0 || projectElements.length === 0) return;
 
     const updateConnectors = () => {
       const skillEl = document.querySelector(`[data-skill-id="${hoveredSkill.id}"]`) as HTMLElement;
@@ -201,13 +194,13 @@ function ProjectConnectors({ hoveredSkill, connectorRefs }: ProjectConnectorsPro
 
         const projectRect = projectEl.getBoundingClientRect();
         const line = connectorRefs.current.get(`${hoveredSkill.id}-${projectSlug}`);
-        
+
         if (line) {
           const x1 = skillRect.right - containerRect.left;
           const y1 = skillRect.top + skillRect.height / 2 - containerRect.top;
           const x2 = projectRect.left - containerRect.left;
           const y2 = projectRect.top + projectRect.height / 2 - containerRect.top;
-          
+
           line.setAttribute('x1', x1.toString());
           line.setAttribute('y1', y1.toString());
           line.setAttribute('x2', x2.toString());
@@ -220,7 +213,7 @@ function ProjectConnectors({ hoveredSkill, connectorRefs }: ProjectConnectorsPro
     updateConnectors();
     window.addEventListener('resize', updateConnectors);
     window.addEventListener('scroll', updateConnectors);
-    
+
     return () => {
       window.removeEventListener('resize', updateConnectors);
       window.removeEventListener('scroll', updateConnectors);
@@ -233,4 +226,3 @@ function ProjectConnectors({ hoveredSkill, connectorRefs }: ProjectConnectorsPro
 
   return null;
 }
-

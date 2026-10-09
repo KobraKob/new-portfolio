@@ -170,3 +170,4 @@ function ProjectSheet({ project, sheetNumber, totalSheets, isFeatured }: Project
     </article>
   );
 }
+
