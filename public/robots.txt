@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://balavanth.dev/sitemap.xml

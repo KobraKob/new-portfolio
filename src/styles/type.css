@@ -1,0 +1,223 @@
+@import "@fontsource/instrument-sans/400.css";
+@import "@fontsource/instrument-sans/500.css";
+@import "@fontsource/instrument-sans/600.css";
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/500.css";
+
+@layer base {
+  @font-face {
+    font-family: "Fraunces";
+    src: url("@fontsource/fraunces/files/fraunces-latin-400-normal.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: "Fraunces";
+    src: url("@fontsource/fraunces/files/fraunces-latin-400-italic.woff2") format("woff2");
+    font-weight: 400;
+    font-style: italic;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: "Fraunces";
+    src: url("@fontsource/fraunces/files/fraunces-latin-500-normal.woff2") format("woff2");
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: "Fraunces";
+    src: url("@fontsource/fraunces/files/fraunces-latin-500-italic.woff2") format("woff2");
+    font-weight: 500;
+    font-style: italic;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: "Fraunces";
+    src: url("@fontsource/fraunces/files/fraunces-latin-600-normal.woff2") format("woff2");
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: "Fraunces";
+    src: url("@fontsource/fraunces/files/fraunces-latin-600-italic.woff2") format("woff2");
+    font-weight: 600;
+    font-style: italic;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: "Fraunces";
+    src: url("@fontsource/fraunces/files/fraunces-latin-700-normal.woff2") format("woff2");
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: "Fraunces";
+    src: url("@fontsource/fraunces/files/fraunces-latin-700-italic.woff2") format("woff2");
+    font-weight: 700;
+    font-style: italic;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: "Fraunces";
+    src: url("@fontsource/fraunces/files/fraunces-latin-800-normal.woff2") format("woff2");
+    font-weight: 800;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: "Fraunces";
+    src: url("@fontsource/fraunces/files/fraunces-latin-800-italic.woff2") format("woff2");
+    font-weight: 800;
+    font-style: italic;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: "Fraunces";
+    src: url("@fontsource/fraunces/files/fraunces-latin-900-normal.woff2") format("woff2");
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: "Fraunces";
+    src: url("@fontsource/fraunces/files/fraunces-latin-900-italic.woff2") format("woff2");
+    font-weight: 900;
+    font-style: italic;
+    font-display: swap;
+  }
+
+}
+
+@layer base {
+  html {
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.55;
+    color: var(--fg);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    margin: 0;
+    color: var(--fg);
+  }
+
+  h1 { font-size: var(--step-6); }
+  h2 { font-size: var(--step-5); }
+  h3 { font-size: var(--step-4); }
+  h4 { font-size: var(--step-3); }
+  h5 { font-size: var(--step-2); }
+  h6 { font-size: var(--step-1); }
+
+  p {
+    max-width: 62ch;
+    margin: 0 0 var(--space-4);
+  }
+
+  a {
+    color: var(--signal);
+    text-decoration: none;
+    transition: opacity var(--duration-ui) var(--ease-settle);
+  }
+
+  a:hover { opacity: 0.8; }
+  a:focus-visible {
+    outline: 2px solid var(--signal);
+    outline-offset: 3px;
+    border-radius: var(--radius);
+  }
+
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+
+  .font-display {
+    font-family: var(--font-display);
+  }
+
+  .text-muted {
+    color: var(--fg-muted);
+  }
+
+  .text-signal {
+    color: var(--signal);
+  }
+
+  .text-counter {
+    color: var(--counter);
+  }
+
+  .uppercase-tracked {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: var(--step--1);
+  }
+
+  .line-draw {
+    overflow: hidden;
+    display: inline-block;
+  }
+
+  .line-draw span {
+    display: inline-block;
+    transform: translateY(100%);
+    animation: line-reveal var(--duration-reveal) var(--ease-settle) forwards;
+  }
+
+  @keyframes line-reveal {
+    to { transform: translateY(0); }
+  }
+
+  .stagger-1 { animation-delay: 40ms; }
+  .stagger-2 { animation-delay: 80ms; }
+  .stagger-3 { animation-delay: 120ms; }
+  .stagger-4 { animation-delay: 160ms; }
+  .stagger-5 { animation-delay: 200ms; }
+  .stagger-6 { animation-delay: 240ms; }
+  .stagger-7 { animation-delay: 280ms; }
+  .stagger-8 { animation-delay: 320ms; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

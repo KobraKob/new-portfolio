@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #ECE5D2;
+  --color-fg: #12110E;
+  --color-fg-muted: #5B574D;
+  --color-rule: rgba(18,17,14,0.16);
+  --color-signal: #D9411E;
+  --color-signal-text: #B8300F;
+  --color-counter: #2F7A68;
+
+  --color-bg-erevan: #0F0E0C;
+  --color-fg-erevan: #E9E2D0;
+  --color-fg-muted-erevan: #9A9384;
+  --color-rule-erevan: rgba(233,226,208,0.14);
+  --color-signal-erevan: #E5481F;
+  --color-signal-text-erevan: #F5986F; /* Lighter version for text on dark bg */
+  --color-counter-erevan: #4E9A86;
+
+  --font-display: "Fraunces", serif;
+  --font-body: "Instrument Sans", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --step--1: clamp(0.75rem, 0.73rem + 0.1vw, 0.8125rem);
+  --step-0: clamp(1rem, 0.96rem + 0.2vw, 1.125rem);
+  --step-1: clamp(1.333rem, 1.2rem + 0.6vw, 1.5rem);
+  --step-2: clamp(1.777rem, 1.5rem + 1.2vw, 2.25rem);
+  --step-3: clamp(2.369rem, 1.8rem + 2.4vw, 3.375rem);
+  --step-4: clamp(3.157rem, 2.2rem + 4vw, 5.063rem);
+  --step-5: clamp(4.209rem, 2.5rem + 7vw, 7.594rem);
+  --step-6: clamp(5.5rem, 2rem + 14vw, 13rem);
+
+  --ease-settle: cubic-bezier(0.2, 0.7, 0.1, 1);
+  --ease-snap: cubic-bezier(0.7, 0, 0.2, 1);
+
+  --duration-micro: 120ms;
+  --duration-ui: 240ms;
+  --duration-reveal: 480ms;
+  --duration-hero: 800ms;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-24: 96px;
+  --space-32: 128px;
+  --space-48: 192px;
+  --space-64: 256px;
+
+  --container-max: 1440px;
+  --container-gutter: 24px;
+  --container-gutter-sm: 16px;
+  --section-padding: clamp(96px, 14vw, 192px);
+
+  --hairline: 1px;
+  --linework: 1.5px;
+  --emphasis: 3px;
+
+  --radius: 0;
+  --radius-circle: 50%;
+}
+
+@layer base {
+  :root {
+    --bg: var(--color-bg);
+    --fg: var(--color-fg);
+    --fg-muted: var(--color-fg-muted);
+    --rule: var(--color-rule);
+    --signal: var(--color-signal);
+    --signal-text: var(--color-signal-text);
+    --counter: var(--color-counter);
+  }
+
+  [data-theme="erevan"] {
+    --bg: var(--color-bg-erevan);
+    --fg: var(--color-fg-erevan);
+    --fg-muted: var(--color-fg-muted-erevan);
+    --rule: var(--color-rule-erevan);
+    --signal: var(--color-signal-erevan);
+    --signal-text: var(--color-signal-text-erevan);
+    --counter: var(--color-counter-erevan);
+  }
+}
