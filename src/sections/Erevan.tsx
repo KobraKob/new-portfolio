@@ -1,12 +1,16 @@
 ﻿import { copy } from '../content/copy';
 import { useTheme } from '../app/ThemeProvider';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
-// Visual Bible assets
-import scenesImg    from '../assets/erevan-scenes.png';
-import characterImg from '../assets/erevan-character.png';
-import creatureImg  from '../assets/erevan-creature.png';
-import worldVideo   from '../assets/erevan-world.mp4';
+// Visual Bible assets — WebP with small-screen variants; PNG fallbacks referenced as URL strings
+import scenesWebp      from '../assets/erevan-scenes.webp';
+import scenesSmWebp    from '../assets/erevan-scenes-sm.webp';
+import charWebp        from '../assets/erevan-character.webp';
+import charSmWebp      from '../assets/erevan-character-sm.webp';
+import birdWebp        from '../assets/erevan-creature.webp';
+import birdSmWebp      from '../assets/erevan-creature-sm.webp';
+import worldVideo      from '../assets/erevan-world-opt.mp4';
+import worldPoster     from '../assets/erevan-world-poster.jpg';
 
 export function Erevan() {
   return (
@@ -172,7 +176,9 @@ const visualBibleFrames = [
     label: 'Scene Studies',
     caption: 'Ch. 2 · Ch. 6 · Ch. 7',
     type: 'image' as const,
-    src: scenesImg,
+    webp: scenesWebp,
+    webpSm: scenesSmWebp,
+    fallback: scenesWebp, // WebP is the authoritative source; PNG not bundled
     alt: 'Scene illustrations: Discovery in Sundermark, Inside the Archive, The Silence of the Hollow',
     span: 'col-span-12 md:col-span-8',
   },
@@ -181,8 +187,10 @@ const visualBibleFrames = [
     label: 'Roen Dourne',
     caption: 'Character study',
     type: 'image' as const,
-    src: characterImg,
-    alt: 'Character study of Roen Dourne — full body and close-up in post-industrial wasteland setting',
+    webp: charWebp,
+    webpSm: charSmWebp,
+    fallback: charWebp,
+    alt: 'Character study of Roen Dourne — full body and close-up',
     span: 'col-span-12 md:col-span-4',
   },
   {
@@ -190,8 +198,10 @@ const visualBibleFrames = [
     label: 'The White Bird',
     caption: 'Creature sheet',
     type: 'image' as const,
-    src: creatureImg,
-    alt: 'Creature concept sheet for the white bird of Erevan — multiple angles and wing-spread pose',
+    webp: birdWebp,
+    webpSm: birdSmWebp,
+    fallback: birdWebp,
+    alt: 'Creature concept sheet for the white bird of Erevan — multiple angles',
     span: 'col-span-12 md:col-span-6',
   },
   {
@@ -200,6 +210,7 @@ const visualBibleFrames = [
     caption: 'Motion study',
     type: 'video' as const,
     src: worldVideo,
+    poster: worldPoster,
     span: 'col-span-12 md:col-span-6',
   },
 ] as const;
@@ -245,6 +256,31 @@ function VisualBible() {
 type Frame = typeof visualBibleFrames[number];
 
 function VisualBibleFrame({ frame, onOpen }: { frame: Frame; onOpen: () => void }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Only autoplay video when it enters the viewport, and respect reduced-motion
+  useEffect(() => {
+    if (frame.type !== 'video') return;
+    const video = videoRef.current;
+    if (!video) return;
+
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReduced) return; // leave paused for reduced-motion users
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          video.play().catch(() => {/* browser policy, ignore */});
+        } else {
+          video.pause();
+        }
+      },
+      { threshold: 0.25 }
+    );
+    observer.observe(video);
+    return () => observer.disconnect();
+  }, [frame.type]);
+
   return (
     <button
       type="button"
@@ -253,30 +289,37 @@ function VisualBibleFrame({ frame, onOpen }: { frame: Frame; onOpen: () => void 
       onClick={onOpen}
       aria-label={`View ${frame.label} — ${frame.caption}`}
     >
-      {/* Media */}
       {frame.type === 'image' ? (
-        <img
-          src={frame.src}
-          alt={frame.alt}
-          className="w-full h-full object-cover transition-transform duration-480 group-hover:scale-[1.02]"
-          loading="lazy"
-          decoding="async"
-        />
+        <picture>
+          <source
+            srcSet={`${'webpSm' in frame ? frame.webpSm : ''} 700w, ${'webp' in frame ? frame.webp : ''} 1400w`}
+            type="image/webp"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 66vw, 50vw"
+          />
+          <img
+            src={'fallback' in frame ? frame.fallback : ''}
+            alt={frame.alt}
+            className="w-full h-full object-cover transition-transform duration-480 group-hover:scale-[1.02]"
+            loading="lazy"
+            decoding="async"
+          />
+        </picture>
       ) : (
         <video
+          ref={videoRef}
           src={frame.src}
+          poster={frame.poster}
           className="w-full h-full object-cover"
-          autoPlay
           loop
           muted
           playsInline
+          preload="none"
           aria-label={frame.label}
         />
       )}
 
-      {/* Overlay label — title block style */}
       <div className="absolute inset-0 bg-[var(--fg)]/0 group-hover:bg-[var(--fg)]/10 transition-colors duration-240 pointer-events-none" aria-hidden="true" />
-      <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between px-4 py-3 bg-[#0F0E0C]/80 backdrop-blur-none">
+      <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between px-4 py-3 bg-[#0F0E0C]/80">
         <span className="font-mono uppercase-tracked text-[#E9E2D0]" style={{ fontSize: 'var(--step--1)' }}>
           {frame.label}
         </span>
@@ -285,7 +328,6 @@ function VisualBibleFrame({ frame, onOpen }: { frame: Frame; onOpen: () => void 
         </span>
       </div>
 
-      {/* Expand hint */}
       <div className="absolute top-3 right-3 w-7 h-7 border border-[#9A9384]/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-240" aria-hidden="true">
         <svg viewBox="0 0 16 16" fill="none" stroke="#E9E2D0" strokeWidth="1.2" className="w-3.5 h-3.5">
           <path d="M10 2h4v4M6 14H2v-4M14 2l-5 5M2 14l5-5" />

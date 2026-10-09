@@ -1,19 +1,23 @@
-﻿import { useRef, useEffect, useState } from "react";
+﻿import { useRef, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { copy } from "../content/copy";
 import { LiveClock } from "../components/LiveClock";
 import { useTheme } from "../app/ThemeProvider";
 
 export function Index() {
-  const [coordinates, setCoordinates] = useState({ lat: 12.9716, lng: 77.5946 });
+  // Write coordinates directly to DOM via ref — no setState, no re-renders
+  const coordRef = useRef<HTMLSpanElement>(null);
   const { theme } = useTheme();
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       const lat = 12.9716 + (e.clientY / window.innerHeight - 0.5) * 0.01;
       const lng = 77.5946 + (e.clientX / window.innerWidth - 0.5) * 0.01;
-      setCoordinates({ lat, lng });
+      if (coordRef.current) {
+        coordRef.current.textContent = `${lat.toFixed(4)}° N, ${lng.toFixed(4)}° E`;
+      }
     };
-    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mousemove", handleMouseMove, { passive: true });
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
@@ -60,19 +64,12 @@ export function Index() {
               </div>
 
               <div className="flex flex-wrap gap-4 animate-slide-up stagger-2">
-                <a
-                  href="/waypoints"
-                  onClick={(e) => {
-                    const el = document.getElementById("waypoints");
-                    if (el) {
-                      e.preventDefault();
-                      el.scrollIntoView({ behavior: "smooth" });
-                    }
-                  }}
+                <Link
+                  to="/waypoints"
                   className="px-6 py-3 bg-[var(--signal)] text-[var(--bg)] font-body font-medium text-[var(--step-0)] hover:opacity-90 transition-opacity hard-shadow"
                 >
                   {copy.hero.actions.work}
-                </a>
+                </Link>
                 <a
                   href="/Balavanth_Resume.pdf"
                   target="_blank"
@@ -93,8 +90,8 @@ export function Index() {
 
               <div className="mt-16 pt-8 border-t border-[var(--rule)] animate-slide-up stagger-3">
                 <div className="flex flex-wrap items-center gap-6 font-mono uppercase-tracked text-[var(--fg-muted)] text-[var(--step--1)]">
-                  <span>
-                    {coordinates.lat.toFixed(4)}° N, {coordinates.lng.toFixed(4)}° E
+                  <span ref={coordRef}>
+                    12.9716° N, 77.5946° E
                   </span>
                   <LiveClock />
                   <span>{copy.hero.marginalia.sheet}</span>
@@ -135,15 +132,6 @@ function HeroTerrain({ theme }: { theme: "ground" | "erevan" }) {
     const MULTIPLIERS = [0.01, 0.025, 0.05];
     const layerRefs = [layer0Ref, layer1Ref, layer2Ref];
 
-    const onMouseMove = (e: MouseEvent) => {
-      const cx = window.innerWidth / 2;
-      const cy = window.innerHeight / 2;
-      targetOffset.current = {
-        x: (e.clientX - cx) / cx,
-        y: (e.clientY - cy) / cy,
-      };
-    };
-
     const tick = () => {
       const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
       currentOffset.current.x = lerp(currentOffset.current.x, targetOffset.current.x, 0.08);
@@ -157,11 +145,31 @@ function HeroTerrain({ theme }: { theme: "ground" | "erevan" }) {
         }
       });
 
-      rafRef.current = requestAnimationFrame(tick);
+      // Stop the loop when current is close enough to target (settled)
+      const dx = Math.abs(currentOffset.current.x - targetOffset.current.x);
+      const dy = Math.abs(currentOffset.current.y - targetOffset.current.y);
+      if (dx > 0.001 || dy > 0.001) {
+        rafRef.current = requestAnimationFrame(tick);
+      } else {
+        rafRef.current = null;
+      }
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      const cx = window.innerWidth / 2;
+      const cy = window.innerHeight / 2;
+      targetOffset.current = {
+        x: (e.clientX - cx) / cx,
+        y: (e.clientY - cy) / cy,
+      };
+      // Restart loop only if not already running
+      if (rafRef.current === null) {
+        rafRef.current = requestAnimationFrame(tick);
+      }
     };
 
     window.addEventListener("mousemove", onMouseMove, { passive: true });
-    rafRef.current = requestAnimationFrame(tick);
+    // Don't start the loop eagerly — it starts on first mouse move
 
     return () => {
       window.removeEventListener("mousemove", onMouseMove);
