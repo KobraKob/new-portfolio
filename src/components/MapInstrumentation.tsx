@@ -1,6 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 
 type Pointer = { x: number; y: number; lat: number; lng: number };
+
+// Section stop percentages (one per section, 0-100)
+const SECTION_STOPS = [0, 14, 28, 42, 56, 70, 84, 100];
 
 export function MapInstrumentation() {
   const [progress, setProgress] = useState(0);
@@ -50,25 +53,74 @@ export function MapInstrumentation() {
 
   return (
     <>
+      {/* Scale bar — bottom left */}
       <aside className="pointer-events-none fixed bottom-8 left-20 z-30 hidden items-end gap-3 lg:flex" aria-hidden="true">
         <span className="font-mono text-[10px] tracking-[0.12em] text-[var(--fg-muted)]">SCALE 1:∞ — {progress}%</span>
         <span className="relative block h-1 w-28 border border-[var(--rule)]">
           <span className="absolute inset-y-0 left-0 block bg-[var(--signal)]" style={{ width: `${progress}%` }} />
         </span>
       </aside>
-      <div className="pointer-events-none fixed inset-y-0 left-[78px] z-30 hidden w-px bg-[var(--rule)] lg:block" aria-hidden="true">
-        <span className="absolute left-1/2 top-0 h-[var(--route-progress)] w-[3px] -translate-x-1/2 bg-[var(--signal)]" style={{ ['--route-progress' as string]: `${progress}%` }} />
+
+      {/* Route line + section stop nodes */}
+      <div
+        className="pointer-events-none fixed inset-y-0 left-[78px] z-30 hidden lg:block"
+        style={{ width: '3px' }}
+        aria-hidden="true"
+      >
+        <svg
+          className="absolute inset-0 w-full h-full"
+          viewBox="0 0 3 100"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          {/* Background route */}
+          <line
+            x1="1.5" y1="0" x2="1.5" y2="100"
+            stroke="var(--rule)"
+            strokeWidth="3"
+            vectorEffect="non-scaling-stroke"
+          />
+          {/* Progress fill */}
+          <line
+            x1="1.5" y1="0" x2="1.5" y2="100"
+            stroke="var(--signal)"
+            strokeWidth="3"
+            strokeDasharray="100"
+            strokeDashoffset={100 - progress}
+            vectorEffect="non-scaling-stroke"
+            style={{ transition: 'stroke-dashoffset 0.1s linear' }}
+          />
+        </svg>
+
+        {/* Section stop nodes */}
+        {SECTION_STOPS.map((pct) => (
+          <div
+            key={pct}
+            className="absolute w-2 h-2 rounded-full border border-[var(--bg)]"
+            style={{
+              top: `calc(${pct}% - 4px)`,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              backgroundColor: progress >= pct ? 'var(--signal)' : 'var(--rule)',
+              transition: 'background-color 0.3s ease',
+            }}
+          />
+        ))}
       </div>
+
+      {/* Crosshair cursor with live coordinates */}
       {pointer && (
         <div
           className="pointer-events-none fixed z-[80] hidden h-8 w-8 -translate-x-1/2 -translate-y-1/2 border border-[var(--signal)] mix-blend-multiply md:block"
           style={{ left: pointer.x, top: pointer.y }}
           aria-hidden="true"
         >
+          {/* Crosshair ticks */}
           <span className="absolute left-1/2 top-[-5px] h-[3px] w-px -translate-x-1/2 bg-[var(--signal)]" />
           <span className="absolute bottom-[-5px] left-1/2 h-[3px] w-px -translate-x-1/2 bg-[var(--signal)]" />
           <span className="absolute left-[-5px] top-1/2 h-px w-[3px] -translate-y-1/2 bg-[var(--signal)]" />
           <span className="absolute right-[-5px] top-1/2 h-px w-[3px] -translate-y-1/2 bg-[var(--signal)]" />
+          {/* Coordinate readout */}
           <span className="absolute left-5 top-9 whitespace-nowrap font-mono text-[9px] tracking-[0.06em] text-[var(--signal-text)]">
             {pointer.lat.toFixed(4)}° N / {pointer.lng.toFixed(4)}° E
           </span>

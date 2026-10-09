@@ -1,4 +1,4 @@
-@import "@styles/tokens.css";
+﻿@import "@styles/tokens.css";
 @import "@styles/type.css";
 
 @layer base {
@@ -148,18 +148,20 @@
     font-family: var(--font-display);
     font-weight: 400;
     font-style: normal;
+    font-variation-settings: "opsz" 9, "SOFT" 0, "WONK" 0;
   }
 
   .fraunces-erevan {
     font-family: var(--font-display);
     font-weight: 400;
     font-style: italic;
+    font-variation-settings: "opsz" 9, "SOFT" 100, "WONK" 1;
   }
 
   @media (prefers-reduced-motion: no-preference) {
     .fraunces-ground,
     .fraunces-erevan {
-      transition: font-weight 300ms var(--ease-settle),
+      transition: font-variation-settings 300ms var(--ease-settle),
                   font-style 300ms var(--ease-settle);
     }
   }

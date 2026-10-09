@@ -8,8 +8,8 @@ export function Waypoints() {
   const compact = getCompactProjects();
 
   return (
-    <section 
-      id="waypoints" 
+    <section
+      id="waypoints"
       className="section"
       aria-labelledby="waypoints-title"
     >
@@ -27,9 +27,9 @@ export function Waypoints() {
           {/* Featured projects — 12-col grid */}
           <div className="grid-12 gap-8">
             {featured.map((project, index) => (
-              <ProjectSheet 
-                key={project.slug} 
-                project={project} 
+              <ProjectSheet
+                key={project.slug}
+                project={project}
                 sheetNumber={index + 1}
                 totalSheets={featured.length + compact.length}
                 isFeatured={true}
@@ -42,12 +42,11 @@ export function Waypoints() {
               <h3 className="font-mono uppercase-tracked text-[var(--signal)] mb-8 text-center">
                 Additional Waypoints
               </h3>
-              {/* Compact projects — plain Tailwind grid, not grid-12 */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {compact.map((project, index) => (
-                  <ProjectSheet 
-                    key={project.slug} 
-                    project={project} 
+                  <ProjectSheet
+                    key={project.slug}
+                    project={project}
                     sheetNumber={featured.length + index + 1}
                     totalSheets={featured.length + compact.length}
                     isFeatured={false}
@@ -78,17 +77,20 @@ function ProjectSheet({ project, sheetNumber, totalSheets, isFeatured }: Project
   };
 
   return (
-    <article 
+    <article
       className={cn(
         'relative group bg-[var(--bg)] border border-[var(--rule)] transition-theme hard-shadow overflow-hidden',
         isFeatured
           ? 'col-span-12 md:col-span-6 lg:col-span-4'
-          : '' // compact cards live in a plain grid, no col-span needed
+          : ''
       )}
-      style={{ aspectRatio: '1 / 1.414' }}
+      style={{
+        aspectRatio: '1 / 1.414',
+        viewTransitionName: isFeatured ? `project-card-${project.slug}` : undefined,
+      } as React.CSSProperties}
     >
       <div className="absolute inset-0 bg-[var(--bg)] opacity-0 group-hover:opacity-100 transition-opacity duration-240" aria-hidden="true" />
-      
+
       <div className="relative z-10 p-6 h-full flex flex-col">
         <div className="flex-1 flex flex-col">
           <header className="mb-6">
@@ -102,8 +104,8 @@ function ProjectSheet({ project, sheetNumber, totalSheets, isFeatured }: Project
 
           <div className="flex flex-wrap gap-2 mb-6">
             {project.stack.slice(0, 4).map((tech, i) => (
-              <span 
-                key={i} 
+              <span
+                key={i}
                 className="font-mono uppercase-tracked text-[var(--step--1)] px-2 py-1 bg-[var(--rule)] text-[var(--fg-muted)] border border-[var(--rule)]"
               >
                 {tech}
@@ -121,8 +123,8 @@ function ProjectSheet({ project, sheetNumber, totalSheets, isFeatured }: Project
               <div>
                 <span className="text-[var(--fg-muted)] block mb-1">{copy.waypoints.titleBlockLabels.status}</span>
                 <span className="text-[var(--fg)] flex items-center gap-2">
-                  <span 
-                    className="w-2 h-2 rounded-full" 
+                  <span
+                    className="w-2 h-2 rounded-full"
                     style={{ backgroundColor: statusColors[project.status] }}
                     aria-hidden="true"
                   />
@@ -136,7 +138,7 @@ function ProjectSheet({ project, sheetNumber, totalSheets, isFeatured }: Project
               <div className="col-span-2">
                 <span className="text-[var(--fg-muted)] block mb-1">{copy.waypoints.titleBlockLabels.scale}</span>
                 <span className="text-[var(--fg)]">
-                  {project.status === 'DEPLOYED' ? '1:1 DEPLOYED' : 
+                  {project.status === 'DEPLOYED' ? '1:1 DEPLOYED' :
                    project.status === 'WORKING' ? '1:1 WORKING' :
                    project.status === 'IN BUILD' ? '1:1 IN BUILD' : '1:1 PROTOTYPE'}
                 </span>
@@ -144,8 +146,8 @@ function ProjectSheet({ project, sheetNumber, totalSheets, isFeatured }: Project
             </div>
 
             {isFeatured && (
-              <Link 
-                to={`/work/${project.slug}`} 
+              <Link
+                to={`/work/${project.slug}`}
                 className="mt-4 block w-full text-center py-3 px-4 border-2 border-[var(--signal)] text-[var(--signal)] font-body font-medium text-[var(--step-0)] hover:bg-[var(--signal)] hover:text-[var(--bg)] transition-all hard-shadow"
               >
                 View case study
@@ -153,9 +155,9 @@ function ProjectSheet({ project, sheetNumber, totalSheets, isFeatured }: Project
             )}
 
             {project.repoUrl && (
-              <a 
-                href={project.repoUrl} 
-                target="_blank" 
+              <a
+                href={project.repoUrl}
+                target="_blank"
                 rel="noopener noreferrer"
                 className="mt-2 block w-full text-center py-2 px-4 text-[var(--fg-muted)] font-mono uppercase-tracked text-[var(--step--1)] hover:text-[var(--fg)] transition-colors"
               >
@@ -170,4 +172,3 @@ function ProjectSheet({ project, sheetNumber, totalSheets, isFeatured }: Project
     </article>
   );
 }
-

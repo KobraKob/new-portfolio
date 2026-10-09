@@ -18,41 +18,33 @@ export function Legend() {
           <span className="font-mono uppercase-tracked text-[var(--signal)] block mb-4">
             {copy.legend.title}
           </span>
-          <h2
-            id="legend-title"
-            className="font-display fraunces-ground text-[var(--fg)]"
-            style={{ fontSize: 'var(--step-5)' }}
-          >
+          <h2 id="legend-title" className="font-display fraunces-ground text-[var(--fg)]" style={{ fontSize: 'var(--step-5)' }}>
             {copy.legend.subtitle}
           </h2>
         </header>
 
-        {/* Map Key — compact, above the skill rows */}
-        <div className="mb-12 flex flex-wrap gap-6 items-center pb-6 border-b border-[var(--rule)]">
-          <span className="font-mono uppercase-tracked text-[var(--signal)] text-[var(--step--1)]">
-            Map Key
-          </span>
-          {Object.entries(copy.legend.symbolKey).map(([status, description]) => (
-            <div key={status} className="flex items-center gap-2">
-              <span className="font-mono text-[var(--step-1)] text-[var(--signal)] leading-none" aria-hidden="true">
-                {status === 'shipped' ? '●' : status === 'working' ? '◐' : '○'}
-              </span>
-              <span className="font-body text-[var(--fg-muted)] text-[var(--step-0)]">{description}</span>
+        <div className="grid-12 gap-8">
+          <div className="col-span-12 lg:col-span-8">
+            <div className="space-y-12" role="list" aria-label="Skills legend">
+              {copy.legend.categories.map((category) => (
+                <SkillCategory
+                  key={category}
+                  category={category}
+                  skills={skillsByCategory[category] || []}
+                  onHover={setHoveredSkill}
+                  connectorRefs={connectorRefs}
+                />
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
 
-        {/* Skill categories */}
-        <div className="space-y-10" role="list" aria-label="Skills legend">
-          {copy.legend.categories.map((category) => (
-            <SkillCategory
-              key={category}
-              category={category}
-              skills={skillsByCategory[category] || []}
-              onHover={setHoveredSkill}
+          <div className="col-span-12 lg:col-span-4">
+            <LegendKey />
+            <ProjectConnectors
+              hoveredSkill={hoveredSkill}
               connectorRefs={connectorRefs}
             />
-          ))}
+          </div>
         </div>
 
         <svg
@@ -91,15 +83,12 @@ interface SkillCategoryProps {
 function SkillCategory({ category, skills, onHover, connectorRefs }: SkillCategoryProps) {
   return (
     <article className="relative" role="listitem">
-      {/* Category heading */}
-      <h3 className="font-mono uppercase-tracked text-[var(--signal)] text-[var(--step--1)] mb-4">
+      <h3 className="font-mono uppercase-tracked text-[var(--signal)] text-[var(--step-0)] mb-6 pb-2 border-b border-[var(--rule)]">
         {category}
       </h3>
-
-      {/* Skills as horizontal rows — no boxes, just clean rows with a divider */}
-      <div role="list" className="border-t border-[var(--rule)]">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4" role="list">
         {skills.map((skill) => (
-          <SkillRow
+          <SkillItem
             key={skill.id}
             skill={skill}
             onHover={onHover}
@@ -117,57 +106,71 @@ interface SkillItemProps {
   connectorRefs: React.RefObject<Map<string, SVGLineElement>>;
 }
 
-function SkillRow({ skill, onHover }: SkillItemProps) {
+function SkillItem({ skill, onHover }: SkillItemProps) {
   const symbol = getSkillSymbol(skill.status);
 
   return (
     <button
       type="button"
-      role="listitem"
-      className="group w-full flex items-center gap-4 py-3 px-2 border-b border-[var(--rule)] hover:bg-[var(--rule)]/30 transition-colors text-left"
+      className="group relative flex items-start gap-4 p-4 bg-[var(--bg)] border border-[var(--rule)] hover:border-[var(--signal)] transition-colors hard-shadow"
       onMouseEnter={() => onHover(skill)}
       onMouseLeave={() => onHover(null)}
       onFocus={() => onHover(skill)}
       onBlur={() => onHover(null)}
-      aria-label={`${skill.name}, ${copy.legend.symbolKey[skill.status]}${skill.projects.length ? `; used in ${skill.projects.join(', ')}` : ''}`}
+      aria-label={`${skill.name}, ${copy.legend.symbolKey[skill.status]}; used in ${skill.projects.join(', ')}`}
     >
-      {/* Symbol */}
       <span
-        className="font-mono text-[var(--step-1)] text-[var(--signal)] shrink-0 w-6 text-center leading-none"
+        className="font-mono text-[var(--step-2)] text-[var(--signal)] shrink-0 mt-0.5"
         aria-hidden="true"
       >
         {symbol}
       </span>
-
-      {/* Name — takes remaining space */}
-      <span className="flex-1 font-display fraunces-ground text-[var(--fg)] text-[var(--step-0)] group-hover:text-[var(--signal)] transition-colors">
-        {skill.name}
-      </span>
-
-      {/* Status label */}
-      <span className="hidden sm:block font-mono uppercase-tracked text-[var(--fg-muted)] text-[var(--step--1)] shrink-0 w-48 text-right">
-        {copy.legend.symbolKey[skill.status]}
-      </span>
-
-      {/* Project tags */}
-      {skill.projects.length > 0 && (
-        <div className="hidden md:flex gap-1 shrink-0">
-          {skill.projects.slice(0, 2).map((project) => (
+      <div className="flex-1 min-w-0">
+        <h4 className="font-display fraunces-ground text-[var(--fg)] text-[var(--step-0)] mb-1 truncate">
+          {skill.name}
+        </h4>
+        <p className="font-mono uppercase-tracked text-[var(--fg-muted)] text-[var(--step--1)]">
+          {copy.legend.symbolKey[skill.status]}
+        </p>
+        <div className="mt-2 flex flex-wrap gap-1">
+          {skill.projects.slice(0, 3).map((project) => (
             <span
               key={project}
-              className="font-mono uppercase-tracked text-[var(--step--1)] px-2 py-0.5 bg-[var(--rule)] text-[var(--fg-muted)]"
+              className="font-mono uppercase-tracked text-[var(--step--1)] px-1.5 py-0.5 bg-[var(--rule)] text-[var(--fg-muted)] text-[var(--fg)]/60"
             >
               {project.toUpperCase()}
             </span>
           ))}
-          {skill.projects.length > 2 && (
-            <span className="font-mono uppercase-tracked text-[var(--step--1)] text-[var(--fg-muted)] px-1">
-              +{skill.projects.length - 2}
+          {skill.projects.length > 3 && (
+            <span className="font-mono uppercase-tracked text-[var(--step--1)] text-[var(--fg-muted)]">
+              +{skill.projects.length - 3}
             </span>
           )}
         </div>
-      )}
+      </div>
     </button>
+  );
+}
+
+function LegendKey() {
+  return (
+    <div className="sticky top-24 bg-[var(--bg)] border border-[var(--rule)] p-6 hard-shadow">
+      <h3 className="font-mono uppercase-tracked text-[var(--signal)] text-[var(--step-0)] mb-6 pb-3 border-b border-[var(--rule)]">
+        Map Key
+      </h3>
+      <dl className="space-y-4" role="list">
+        {Object.entries(copy.legend.symbolKey).map(([status, description]) => (
+          <div key={status} className="flex items-center gap-3">
+            <dt className="font-mono text-[var(--step-2)] text-[var(--signal)] shrink-0">
+              {status === 'shipped' ? '●' : status === 'working' ? '◐' : '○'}
+            </dt>
+            <dd className="font-body text-[var(--fg-muted)] text-[var(--step-0)]">
+              {description}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </div>
   );
 }
 
@@ -179,7 +182,6 @@ interface ProjectConnectorsProps {
 function ProjectConnectors({ hoveredSkill, connectorRefs }: ProjectConnectorsProps) {
   useEffect(() => {
     if (!hoveredSkill) return;
-
     const updateConnectors = () => {
       const skillEl = document.querySelector(`[data-skill-id="${hoveredSkill.id}"]`) as HTMLElement;
       if (!skillEl) return;
